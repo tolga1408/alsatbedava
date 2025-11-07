@@ -27,6 +27,7 @@ interface Listing {
 interface MapViewProps {
   listings: Listing[];
   onListingClick?: (listingId: number) => void;
+  onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
 }
 
 // Turkish city coordinates (approximate centers)
@@ -48,7 +49,7 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
   Denizli: [37.7765, 29.0864],
 };
 
-export function MapView({ listings, onListingClick }: MapViewProps) {
+export function MapView({ listings, onListingClick, onBoundsChange }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -65,6 +66,19 @@ export function MapView({ listings, onListingClick }: MapViewProps) {
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(map);
+
+      // Listen for map move events
+      if (onBoundsChange) {
+        map.on('moveend', () => {
+          const bounds = map.getBounds();
+          onBoundsChange({
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest(),
+          });
+        });
+      }
 
       mapInstanceRef.current = map;
     }

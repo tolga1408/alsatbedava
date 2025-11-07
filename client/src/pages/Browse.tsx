@@ -24,7 +24,7 @@ import {
   Map,
   List,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -35,6 +35,9 @@ export default function Browse() {
   const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [autoUpdate, setAutoUpdate] = useState(true);
+  const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+  const boundsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [filters, setFilters] = useState({
     search: "",
     city: "all",
@@ -43,11 +46,36 @@ export default function Browse() {
     categoryId: 1, // Emlak
   });
 
+  // Debounced bounds handler
+  const handleBoundsChange = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
+    if (!autoUpdate) return;
+    
+    // Clear existing timeout
+    if (boundsTimeoutRef.current) {
+      clearTimeout(boundsTimeoutRef.current);
+    }
+    
+    // Set new timeout for debouncing
+    boundsTimeoutRef.current = setTimeout(() => {
+      setMapBounds(bounds);
+    }, 500); // 500ms debounce
+  }, [autoUpdate]);
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (boundsTimeoutRef.current) {
+        clearTimeout(boundsTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const { data: listings, isLoading } = trpc.listings.search.useQuery({
     city: filters.city === "all" ? undefined : filters.city,
     minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
     categoryId: filters.categoryId,
+    bounds: viewMode === "map" && autoUpdate && mapBounds ? mapBounds : undefined,
   });
 
   const turkishCities = [
@@ -398,7 +426,36 @@ export default function Browse() {
 
             {/* Map View */}
             {viewMode === "map" ? (
-              <div className="h-[calc(100vh-250px)] min-h-[500px]">
+              <div className="space-y-4">
+                {/* Auto-update toggle */}
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="auto-update"
+                      checked={autoUpdate}
+                      onChange={(e) => setAutoUpdate(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <label htmlFor="auto-update" className="text-sm font-medium cursor-pointer">
+                      Haritayı hareket ettirdiğimde ilanları güncelle
+                    </label>
+                  </div>
+                  {!autoUpdate && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (mapBounds) {
+                          setMapBounds({ ...mapBounds });
+                        }
+                      }}
+                    >
+                      Yenile
+                    </Button>
+                  )}
+                </div>
+                <div className="h-[calc(100vh-320px)] min-h-[500px]">
                 {isLoading ? (
                   <Card className="h-full flex items-center justify-center">
                     <div className="text-center">
@@ -410,8 +467,10 @@ export default function Browse() {
                   <MapView
                     listings={listings || []}
                     onListingClick={(id) => setLocation(`/listing/${id}`)}
+                    onBoundsChange={handleBoundsChange}
                   />
                 )}
+                </div>
               </div>
             ) : /* List View */ isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

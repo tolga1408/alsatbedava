@@ -59,6 +59,12 @@ export const appRouter = router({
         status: z.string().optional(),
         limit: z.number().optional(),
         offset: z.number().optional(),
+        bounds: z.object({
+          north: z.number(),
+          south: z.number(),
+          east: z.number(),
+          west: z.number(),
+        }).optional(),
       }))
       .query(async ({ input }) => {
         const { searchListings } = await import('./db');

@@ -122,6 +122,25 @@ export async function getListingsByUserId(userId: number) {
   return await db.select().from(listings).where(eq(listings.userId, userId)).orderBy(listings.createdAt);
 }
 
+// City coordinates for bounds filtering
+const CITY_COORDINATES: Record<string, [number, number]> = {
+  İstanbul: [41.0082, 28.9784],
+  Ankara: [39.9334, 32.8597],
+  İzmir: [38.4237, 27.1428],
+  Bursa: [40.1826, 29.0665],
+  Antalya: [36.8969, 30.7133],
+  Adana: [37.0, 35.3213],
+  Konya: [37.8746, 32.4932],
+  Gaziantep: [37.0662, 37.3833],
+  Şanlıurfa: [37.1591, 38.7969],
+  Mersin: [36.8121, 34.6415],
+  Kayseri: [38.7205, 35.4826],
+  Eskişehir: [39.7767, 30.5206],
+  Diyarbakır: [37.9144, 40.2306],
+  Samsun: [41.2867, 36.33],
+  Denizli: [37.7765, 29.0864],
+};
+
 export async function searchListings(params: {
   categoryId?: number;
   minPrice?: number;
@@ -130,6 +149,7 @@ export async function searchListings(params: {
   status?: string;
   limit?: number;
   offset?: number;
+  bounds?: { north: number; south: number; east: number; west: number };
 }) {
   const db = await getDb();
   if (!db) return [];
@@ -144,6 +164,28 @@ export async function searchListings(params: {
   }
   if (params.city) {
     conditions.push(eq(listings.city, params.city));
+  }
+  
+  // Filter by bounds if provided (using city coordinates)
+  if (params.bounds) {
+    const citiesInBounds = Object.entries(CITY_COORDINATES)
+      .filter(([_, coords]) => {
+        const [lat, lng] = coords;
+        return lat >= params.bounds!.south && 
+               lat <= params.bounds!.north &&
+               lng >= params.bounds!.west && 
+               lng <= params.bounds!.east;
+      })
+      .map(([city]) => city);
+    
+    if (citiesInBounds.length > 0) {
+      // Only filter by cities in bounds if we found any
+      const cityConditions = citiesInBounds.map(city => eq(listings.city, city));
+      conditions.push(or(...cityConditions) as any);
+    } else {
+      // No cities in bounds, return empty result
+      return [];
+    }
   }
   
   let query = db.select().from(listings);

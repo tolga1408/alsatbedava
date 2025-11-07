@@ -90,3 +90,12 @@
 - [x] Add clickable markers with listing previews
 - [x] Sync map bounds with search filters
 - [x] Mobile-responsive map layout
+
+## Search As I Move Map Feature (NEW)
+- [x] Update MapView to expose bounds change callback
+- [x] Add map bounds to search query parameters
+- [x] Implement backend filtering by geographic bounds (city-level)
+- [x] Add auto-update toggle in UI
+- [x] Implement debouncing for smooth performance (500ms)
+- [x] Show visual feedback when updating
+- [x] Add refresh button for manual updates
