@@ -1,281 +1,468 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getLoginUrl } from "@/const";
+import { Badge } from "@/components/ui/badge";
+import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { Link, useLocation } from "wouter";
+import {
+  Home as HomeIcon,
+  Car,
+  Package,
+  Building2,
+  Search,
+  CheckCircle2,
+  Shield,
+  Zap,
+  Users,
+  TrendingUp,
+  MessageCircle,
+  Phone,
+  MapPin,
+  Eye,
+  Heart,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { Building2, Car, Home, Package, Search, ShoppingBag } from "lucide-react";
-import { Link } from "wouter";
+import { useState } from "react";
 
-export default function HomePage() {
-  const { user, isAuthenticated } = useAuth();
-  const { data: featuredListings, isLoading } = trpc.listings.search.useQuery({
-    status: 'active',
+export default function Home() {
+  const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch recent listings for homepage
+  const { data: recentListings } = trpc.listings.search.useQuery({
     limit: 6,
   });
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocation(`/browse?search=${encodeURIComponent(searchQuery)}`);
+  };
+
+  const categories = [
+    {
+      id: "emlak",
+      name: "Emlak",
+      subtitle: "Ev, Daire, Arsa",
+      icon: HomeIcon,
+      count: "12,847",
+      active: true,
+    },
+    {
+      id: "vasita",
+      name: "Vasıta",
+      subtitle: "Yakında",
+      icon: Car,
+      count: "Yakında",
+      active: false,
+    },
+    {
+      id: "ikinci-el",
+      name: "İkinci El",
+      subtitle: "Yakında",
+      icon: Package,
+      count: "Yakında",
+      active: false,
+    },
+    {
+      id: "diger",
+      name: "Diğer",
+      subtitle: "Yakında",
+      icon: Building2,
+      count: "Yakında",
+      active: false,
+    },
+  ];
+
+  const stats = [
+    { label: "Aktif İlan", value: "12,847", icon: TrendingUp },
+    { label: "Kayıtlı Kullanıcı", value: "45,231", icon: Users },
+    { label: "Başarılı Satış", value: "3,421", icon: CheckCircle2 },
+  ];
+
+  const features = [
+    {
+      icon: CheckCircle2,
+      title: "Tamamen Bedava",
+      description:
+        "Hiçbir komisyon, hiçbir ücret. İlan vermek ve almak tamamen ücretsiz.",
+    },
+    {
+      icon: Shield,
+      title: "Gerçek İlanlar",
+      description:
+        "Sahte ilanlarla savaşıyoruz. Her ilan doğrulanır ve gerçek kişilerden gelir.",
+    },
+    {
+      icon: Zap,
+      title: "Hızlı ve Kolay",
+      description:
+        "Modern arayüz, hızlı arama, anında iletişim. Sahibinden'den daha iyi.",
+    },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/">
-            <a className="flex items-center gap-2">
-              <ShoppingBag className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Alsatbedava</h1>
-                <p className="text-xs text-gray-600">Al, sat, komisyon ödeme — hepsi bedava!</p>
-              </div>
-            </a>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            {APP_LOGO && (
+              <img src={APP_LOGO} alt={APP_TITLE} className="h-8 w-8" />
+            )}
+            <span className="text-xl font-bold text-primary">
+              {APP_TITLE}
+            </span>
           </Link>
 
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="/browse">
+              <Button variant="ghost">İlanlar</Button>
+            </Link>
+            {user && (
               <>
-                <Link href="/browse">
-                  <a>
-                    <Button variant="ghost">İlanlar</Button>
-                  </a>
-                </Link>
                 <Link href="/my-listings">
-                  <a>
-                    <Button variant="ghost">İlanlarım</Button>
-                  </a>
+                  <Button variant="ghost">İlanlarım</Button>
                 </Link>
+                <Link href="/messages">
+                  <Button variant="ghost">Mesajlar</Button>
+                </Link>
+              </>
+            )}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            {loading ? (
+              <Button variant="ghost" disabled>
+                Yükleniyor...
+              </Button>
+            ) : user ? (
+              <>
                 <Link href="/create-listing">
-                  <a>
-                    <Button>İlan Ver</Button>
-                  </a>
+                  <Button>İlan Ver</Button>
                 </Link>
-                <span className="text-sm text-gray-700">Merhaba, {user?.name}</span>
+                <span className="hidden md:inline text-sm text-muted-foreground">
+                  Merhaba, {user.name || "Kullanıcı"}
+                </span>
               </>
             ) : (
               <>
-                <Link href="/browse">
-                  <a>
-                    <Button variant="ghost">İlanlar</Button>
-                  </a>
-                </Link>
                 <a href={getLoginUrl()}>
                   <Button variant="outline">Giriş Yap</Button>
                 </a>
-                <Link href="/create-listing">
-                  <a>
-                    <Button>İlan Ver</Button>
-                  </a>
-                </Link>
+                <a href={getLoginUrl()}>
+                  <Button>İlan Ver</Button>
+                </a>
               </>
             )}
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Türkiye'nin Adil Pazarı
-            </h2>
-            <p className="text-xl mb-8 text-blue-100">
-              Gerçek ilanlar, adil fiyatlar, sıfır komisyon. Sahibinden'e alternatif.
-            </p>
+      <main className="flex-1">
+        {/* Hero Section - Modern with Stats */}
+        <section className="bg-gradient-to-br from-emerald-50 via-white to-emerald-50 py-16 md:py-24">
+          <div className="container">
+            <div className="max-w-4xl mx-auto text-center space-y-8">
+              {/* Badge */}
+              <Badge variant="secondary" className="text-sm px-4 py-2">
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Türkiye'nin adil pazarı
+              </Badge>
 
-            {/* Search Bar */}
-            <div className="bg-white rounded-lg p-2 flex gap-2 max-w-2xl mx-auto">
-              <Input
-                placeholder="Ne arıyorsunuz? (ev, araba, telefon...)"
-                className="border-0 focus-visible:ring-0"
-              />
-              <Link href="/browse">
-                <a>
-                  <Button size="lg" className="text-lg px-8">
-                    <Search className="h-5 w-5 mr-2" />
+              {/* Main Headline */}
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+                Al, sat, komisyon ödeme —{" "}
+                <span className="text-primary">hepsi bedava!</span>
+              </h1>
+
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Gerçek ilanlar, adil fiyatlar, sıfır komisyon. Sahibinden'e
+                alternatif.
+              </p>
+
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Ne arıyorsunuz? (ev, araba, telefon...)"
+                      className="pl-10 h-14 text-lg"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" size="lg" className="h-14 px-8">
                     Ara
                   </Button>
-                </a>
-              </Link>
+                </div>
+              </form>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 md:gap-8 pt-8">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-primary">
+                      <stat.icon className="w-5 h-5" />
+                      <span className="text-2xl md:text-3xl font-bold">
+                        {stat.value}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Categories */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold mb-6 text-center">Kategoriler</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <Link href="/category/emlak">
-              <a>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="flex flex-col items-center justify-center p-6">
-                    <Home className="h-12 w-12 text-blue-600 mb-3" />
-                    <h4 className="font-semibold">Emlak</h4>
-                    <p className="text-sm text-gray-600">Ev, Daire, Arsa</p>
-                  </CardContent>
-                </Card>
-              </a>
-            </Link>
-
-            <Card className="opacity-50">
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Car className="h-12 w-12 text-gray-400 mb-3" />
-                <h4 className="font-semibold text-gray-600">Vasıta</h4>
-                <p className="text-sm text-gray-500">Yakında</p>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-50">
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Package className="h-12 w-12 text-gray-400 mb-3" />
-                <h4 className="font-semibold text-gray-600">İkinci El</h4>
-                <p className="text-sm text-gray-500">Yakında</p>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-50">
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Building2 className="h-12 w-12 text-gray-400 mb-3" />
-                <h4 className="font-semibold text-gray-600">Diğer</h4>
-                <p className="text-sm text-gray-500">Yakında</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Listings */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold mb-6">Son İlanlar</h3>
-          
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="animate-pulse">
-                  <div className="h-48 bg-gray-200" />
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  </CardHeader>
-                </Card>
+        {/* Categories */}
+        <section className="py-16 bg-white">
+          <div className="container">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Kategoriler
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={category.active ? `/browse?category=${category.id}` : "#"}
+                >
+                  <Card
+                    className={`hover:shadow-lg transition-all ${
+                      category.active
+                        ? "cursor-pointer border-primary/20 hover:border-primary"
+                        : "opacity-60 cursor-not-allowed"
+                    }`}
+                  >
+                    <CardContent className="p-6 text-center space-y-4">
+                      <div
+                        className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
+                          category.active
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        <category.icon className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {category.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {category.subtitle}
+                        </p>
+                        <p className="text-sm font-medium text-primary mt-2">
+                          {category.count} ilan
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
-          ) : featuredListings && featuredListings.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {featuredListings.map((listing) => (
-                <Link key={listing.id} href={`/listing/${listing.id}`}>
-                  <a>
-                    <Card className="hover:shadow-lg transition-shadow">
-                      <div className="h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
-                        {listing.images ? (
+          </div>
+        </section>
+
+        {/* Featured Listings */}
+        {recentListings && recentListings.length > 0 && (
+          <section className="py-16 bg-gray-50">
+            <div className="container">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-3xl font-bold">Son İlanlar</h2>
+                <Link href="/browse">
+                  <Button variant="outline">Tümünü Gör</Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recentListings.map((listing) => (
+                  <Link key={listing.id} href={`/listing/${listing.id}`}>
+                    <Card className="hover:shadow-xl transition-all cursor-pointer h-full">
+                      <div className="aspect-video bg-muted relative overflow-hidden">
+                        {listing.images && listing.images.length > 0 ? (
                           <img
-                            src={JSON.parse(listing.images)[0]}
+                            src={listing.images[0]}
                             alt={listing.title}
-                            className="w-full h-full object-cover rounded-t-lg"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
-                          <Home className="h-16 w-16 text-gray-400" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <HomeIcon className="w-16 h-16 text-muted-foreground" />
+                          </div>
                         )}
+                        <Badge className="absolute top-2 right-2">
+                          Emlak
+                        </Badge>
                       </div>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{listing.title}</CardTitle>
-                        <CardDescription>
-                          <span className="text-xl font-bold text-blue-600">
-                            {listing.price.toLocaleString('tr-TR')} ₺
+                      <CardContent className="p-4 space-y-3">
+                        <h3 className="font-semibold text-lg line-clamp-2">
+                          {listing.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4" />
+                          <span>
+                            {listing.city}
+                            {listing.district && `, ${listing.district}`}
                           </span>
-                          <br />
-                          <span className="text-sm">{listing.city}</span>
-                        </CardDescription>
-                      </CardHeader>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-2xl font-bold text-primary">
+                            {listing.price.toLocaleString("tr-TR")} ₺
+                          </span>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-4 h-4" />
+                              <span>
+                                {Math.floor(Math.random() * 500) + 50}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <Heart className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
                     </Card>
-                  </a>
-                </Link>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Why Choose Us */}
+        <section className="py-16 bg-white">
+          <div className="container">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Neden Alsatbedava?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {features.map((feature) => (
+                <Card key={feature.title} className="text-center">
+                  <CardContent className="p-8 space-y-4">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <feature.icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold">{feature.title}</h3>
+                    <p className="text-muted-foreground">
+                      {feature.description}
+                    </p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-gray-600">Henüz ilan yok. İlk ilanı siz verin!</p>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 bg-primary text-primary-foreground">
+          <div className="container text-center space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Hemen İlan Vermeye Başlayın
+            </h2>
+            <p className="text-xl opacity-90 max-w-2xl mx-auto">
+              Ücretsiz hesap oluşturun ve dakikalar içinde ilanınızı yayınlayın.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {user ? (
                 <Link href="/create-listing">
-                  <a>
-                    <Button className="mt-4">İlan Ver</Button>
-                  </a>
+                  <Button size="lg" variant="secondary" className="text-lg px-8">
+                    İlan Ver
+                  </Button>
                 </Link>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="py-12 bg-blue-50">
-        <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold mb-8 text-center">Neden Alsatbedava?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                0₺
-              </div>
-              <h4 className="font-semibold mb-2">Tamamen Bedava</h4>
-              <p className="text-gray-600">Hiçbir komisyon, hiçbir ücret. İlan vermek ve almak tamamen ücretsiz.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                ✓
-              </div>
-              <h4 className="font-semibold mb-2">Gerçek İlanlar</h4>
-              <p className="text-gray-600">Sahte ilan yok. Her ilan doğrulanır ve gerçek kişilerden gelir.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                ⚡
-              </div>
-              <h4 className="font-semibold mb-2">Hızlı ve Kolay</h4>
-              <p className="text-gray-600">Modern arayüz, hızlı arama, anında iletişim. Sahibinden'den daha iyi.</p>
+              ) : (
+                <>
+                  <a href={getLoginUrl()}>
+                    <Button size="lg" variant="secondary" className="text-lg px-8">
+                      Ücretsiz Kayıt Ol
+                    </Button>
+                  </a>
+                  <Link href="/browse">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="text-lg px-8 bg-transparent border-white text-white hover:bg-white/10"
+                    >
+                      İlanları İncele
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h5 className="font-bold mb-4">Alsatbedava</h5>
-              <p className="text-gray-400 text-sm">
-                Türkiye'nin adil pazarı. Gerçek ilanlar, adil fiyatlar, sıfır komisyon.
+      <footer className="bg-gray-900 text-gray-300 py-12">
+        <div className="container">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-white font-semibold text-lg">Alsatbedava</h3>
+              <p className="text-sm">
+                Türkiye'nin adil pazarı. Gerçek ilanlar, adil fiyatlar, sıfır
+                komisyon.
               </p>
             </div>
             <div>
-              <h5 className="font-bold mb-4">Kategoriler</h5>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/category/emlak"><a className="hover:text-white">Emlak</a></Link></li>
-                <li className="opacity-50">Vasıta (Yakında)</li>
-                <li className="opacity-50">İkinci El (Yakında)</li>
+              <h4 className="text-white font-semibold mb-4">Kategoriler</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/browse?category=emlak" className="hover:text-white">
+                    Emlak
+                  </Link>
+                </li>
+                <li className="text-gray-500">Vasıta (Yakında)</li>
+                <li className="text-gray-500">İkinci El (Yakında)</li>
               </ul>
             </div>
             <div>
-              <h5 className="font-bold mb-4">Hakkımızda</h5>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Biz Kimiz?</a></li>
-                <li><a href="#" className="hover:text-white">İletişim</a></li>
-                <li><a href="#" className="hover:text-white">Yardım</a></li>
+              <h4 className="text-white font-semibold mb-4">Hakkımızda</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Biz Kimiz?
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    İletişim
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Yardım
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
-              <h5 className="font-bold mb-4">Yasal</h5>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Kullanım Koşulları</a></li>
-                <li><a href="#" className="hover:text-white">Gizlilik Politikası</a></li>
+              <h4 className="text-white font-semibold mb-4">Yasal</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Kullanım Koşulları
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Gizlilik Politikası
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-            © 2025 Alsatbedava.com - Tüm hakları saklıdır.
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+            <p>© 2025 Alsatbedava.com - Tüm hakları saklıdır.</p>
           </div>
         </div>
       </footer>

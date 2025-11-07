@@ -107,26 +107,26 @@ export default function CreateListing() {
           <CardContent className="space-y-6">
             {/* Progress Steps */}
             <div className="flex items-center justify-between mb-8">
-              <div className={`flex-1 text-center ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+              <div className={`flex-1 text-center ${step >= 1 ? 'text-primary' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
                   1
                 </div>
                 <p className="text-sm">Temel Bilgiler</p>
               </div>
               <div className="flex-1 h-1 bg-gray-200 mx-2">
-                <div className={`h-full ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`h-full ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
               </div>
-              <div className={`flex-1 text-center ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+              <div className={`flex-1 text-center ${step >= 2 ? 'text-primary' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
                   2
                 </div>
                 <p className="text-sm">Detaylar</p>
               </div>
               <div className="flex-1 h-1 bg-gray-200 mx-2">
-                <div className={`h-full ${step >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`h-full ${step >= 3 ? 'bg-primary' : 'bg-gray-200'}`} />
               </div>
-              <div className={`flex-1 text-center ${step >= 3 ? 'text-blue-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+              <div className={`flex-1 text-center ${step >= 3 ? 'text-primary' : 'text-gray-400'}`}>
+                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
                   3
                 </div>
                 <p className="text-sm">Fotoğraflar</p>
