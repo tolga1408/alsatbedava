@@ -81,3 +81,12 @@
 ## Phase 6: User Dashboard (COMPLETE)
 - [x] My listings page
 - [x] Delete listings
+
+## Map View Feature (NEW)
+- [x] Install Leaflet and React-Leaflet dependencies
+- [x] Create MapView component with listing markers
+- [x] Add map/list toggle to browse page
+- [x] Implement custom price markers with popups
+- [x] Add clickable markers with listing previews
+- [x] Sync map bounds with search filters
+- [x] Mobile-responsive map layout

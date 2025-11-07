@@ -21,26 +21,30 @@ import {
   MessageCircle,
   SlidersHorizontal,
   X,
+  Map,
+  List,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { MapView } from "@/components/MapView";
 
 export default function Browse() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [filters, setFilters] = useState({
     search: "",
-    city: "",
+    city: "all",
     minPrice: "",
     maxPrice: "",
     categoryId: 1, // Emlak
   });
 
   const { data: listings, isLoading } = trpc.listings.search.useQuery({
-    city: filters.city || undefined,
+    city: filters.city === "all" ? undefined : filters.city,
     minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
     categoryId: filters.categoryId,
@@ -163,7 +167,7 @@ export default function Browse() {
                       <SelectValue placeholder="Tüm şehirler" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tüm şehirler</SelectItem>
+                      <SelectItem value="all">Tüm şehirler</SelectItem>
                       {turkishCities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
@@ -293,7 +297,7 @@ export default function Browse() {
                       <SelectValue placeholder="Tüm şehirler" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tüm şehirler</SelectItem>
+                      <SelectItem value="all">Tüm şehirler</SelectItem>
                       {turkishCities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
@@ -332,7 +336,7 @@ export default function Browse() {
                   onClick={() =>
                     setFilters({
                       search: "",
-                      city: "",
+                      city: "all",
                       minPrice: "",
                       maxPrice: "",
                       categoryId: 1,
@@ -362,15 +366,54 @@ export default function Browse() {
                     : `${listings?.length || 0} ilan bulundu`}
                 </p>
               </div>
-              {filters.city && (
-                <Badge variant="secondary" className="text-sm">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  {filters.city}
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {filters.city && (
+                  <Badge variant="secondary" className="text-sm">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {filters.city}
+                  </Badge>
+                )}
+                <div className="flex border rounded-lg overflow-hidden">
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className="rounded-none"
+                  >
+                    <List className="w-4 h-4 mr-2" />
+                    Liste
+                  </Button>
+                  <Button
+                    variant={viewMode === "map" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("map")}
+                    className="rounded-none"
+                  >
+                    <Map className="w-4 h-4 mr-2" />
+                    Harita
+                  </Button>
+                </div>
+              </div>
             </div>
 
-            {isLoading ? (
+            {/* Map View */}
+            {viewMode === "map" ? (
+              <div className="h-[calc(100vh-250px)] min-h-[500px]">
+                {isLoading ? (
+                  <Card className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Harita yükleniyor...</p>
+                    </div>
+                  </Card>
+                ) : (
+                  <MapView
+                    listings={listings || []}
+                    onListingClick={(id) => setLocation(`/listing/${id}`)}
+                  />
+                )}
+              </div>
+            ) : /* List View */ isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <Card key={i} className="animate-pulse">
