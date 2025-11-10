@@ -107,3 +107,12 @@
 - [x] Add visual highlight styles to listing cards (ring-4 ring-primary with scale-105)
 - [x] Clear highlight when clicking elsewhere (3 second auto-clear)
 - [x] Add smooth transition animations
+
+## Split-Screen View Feature (NEW)
+- [x] Add "Bölünmüş" (Split) view mode option
+- [x] Update view toggle UI with three buttons (Liste/Harita/Bölünmüş)
+- [x] Implement side-by-side layout for desktop (50/50 split with lg:flex-row)
+- [x] Add responsive stacked layout for mobile (flex-col on mobile)
+- [x] Ensure marker highlighting works in split view
+- [x] Test auto-scroll behavior in split view
+- [x] Add smooth transitions between view modes
