@@ -37,7 +37,9 @@ export default function Browse() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+  const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
   const boundsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const listingRefs = useRef<Record<number, HTMLDivElement>>({});
   const [filters, setFilters] = useState({
     search: "",
     city: "all",
@@ -69,6 +71,27 @@ export default function Browse() {
       }
     };
   }, []);
+  
+  // Handle marker click - highlight and scroll to listing
+  const handleMarkerClick = useCallback((listingId: number) => {
+    setHighlightedListingId(listingId);
+    
+    // Scroll to the listing card
+    const listingElement = listingRefs.current[listingId];
+    if (listingElement) {
+      listingElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    // Clear highlight after 3 seconds
+    setTimeout(() => {
+      setHighlightedListingId(null);
+    }, 3000);
+  }, []);
+  
+  // Clear highlight when filters change
+  useEffect(() => {
+    setHighlightedListingId(null);
+  }, [filters, viewMode]);
 
   const { data: listings, isLoading } = trpc.listings.search.useQuery({
     city: filters.city === "all" ? undefined : filters.city,
@@ -466,7 +489,7 @@ export default function Browse() {
                 ) : (
                   <MapView
                     listings={listings || []}
-                    onListingClick={(id) => setLocation(`/listing/${id}`)}
+                    onListingClick={handleMarkerClick}
                     onBoundsChange={handleBoundsChange}
                   />
                 )}
@@ -495,7 +518,16 @@ export default function Browse() {
                   return (
                     <Card
                       key={listing.id}
-                      className="hover:shadow-xl transition-all cursor-pointer group"
+                      ref={(el) => {
+                        if (el) {
+                          listingRefs.current[listing.id] = el;
+                        }
+                      }}
+                      className={`hover:shadow-xl transition-all cursor-pointer group ${
+                        highlightedListingId === listing.id
+                          ? 'ring-4 ring-primary ring-offset-2 shadow-2xl scale-105'
+                          : ''
+                      }`}
                     >
                       <Link href={`/listing/${listing.id}`}>
                         <div className="aspect-video bg-muted relative overflow-hidden">

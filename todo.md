@@ -99,3 +99,11 @@
 - [x] Implement debouncing for smooth performance (500ms)
 - [x] Show visual feedback when updating
 - [x] Add refresh button for manual updates
+
+## Marker-to-Listing Highlight Feature (NEW)
+- [x] Add highlighted listing state in Browse page
+- [x] Implement auto-scroll to highlighted listing
+- [x] Update MapView to pass listing ID on marker click
+- [x] Add visual highlight styles to listing cards (ring-4 ring-primary with scale-105)
+- [x] Clear highlight when clicking elsewhere (3 second auto-clear)
+- [x] Add smooth transition animations
