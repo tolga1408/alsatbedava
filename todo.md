@@ -116,3 +116,28 @@
 - [x] Ensure marker highlighting works in split view
 - [x] Test auto-scroll behavior in split view
 - [x] Add smooth transitions between view modes
+
+## Database Seed Script (NEW)
+- [x] Create seed-db.mjs script with realistic Turkish property data
+- [x] Add 30 listings across Istanbul, Ankara, Izmir
+- [x] Include property photos from Unsplash
+- [x] Vary property types (apartment, house, villa, land, office, shop)
+- [x] Realistic Turkish addresses and districts
+- [x] Varied price ranges (1.1M - 15M TL)
+- [x] Run seed script to populate database
+
+## Draggable Split Divider (NEW)
+- [x] Add draggable divider component between map and list panels
+- [x] Implement mouse drag functionality with useEffect
+- [x] Set min/max constraints (30% - 70%)
+- [x] Update panel widths dynamically during drag
+- [x] Add visual feedback (cursor, hover state, icon)
+- [x] Persist split ratio in localStorage
+
+## localStorage Persistence (NEW)
+- [x] Save/restore view mode (Liste/Harita/Bölünmüş)
+- [ ] Save/restore filter values (city, price range, search) - filters not persisted yet
+- [x] Save/restore split ratio preference
+- [x] Save/restore auto-update toggle state
+- [x] Implement useLocalStorage custom hook
+- [x] Handle edge cases (invalid data, version changes)

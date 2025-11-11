@@ -25,6 +25,7 @@ import {
   List,
 } from "lucide-react";
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Link, useLocation } from "wouter";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -34,12 +35,15 @@ export default function Browse() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "map" | "split">("list");
-  const [autoUpdate, setAutoUpdate] = useState(true);
+  const [viewMode, setViewMode] = useLocalStorage<"list" | "map" | "split">("alsatbedava_viewMode", "list");
+  const [autoUpdate, setAutoUpdate] = useLocalStorage("alsatbedava_autoUpdate", true);
   const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
   const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
+  const [splitRatio, setSplitRatio] = useLocalStorage("alsatbedava_splitRatio", 50); // 50% = equal split
+  const [isDragging, setIsDragging] = useState(false);
   const boundsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const listingRefs = useRef<Record<number, HTMLDivElement>>({});
+  const splitContainerRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState({
     search: "",
     city: "all",
@@ -100,6 +104,50 @@ export default function Browse() {
     categoryId: filters.categoryId,
     bounds: viewMode === "map" && autoUpdate && mapBounds ? mapBounds : undefined,
   });
+
+  // Draggable divider handlers
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !splitContainerRef.current) return;
+
+    const container = splitContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const mouseX = e.clientX - containerRect.left;
+    const newRatio = (mouseX / containerRect.width) * 100;
+
+    // Constrain between 30% and 70%
+    const constrainedRatio = Math.min(Math.max(newRatio, 30), 70);
+    setSplitRatio(constrainedRatio);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add/remove mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
 
   const turkishCities = [
     "İstanbul",
@@ -491,9 +539,19 @@ export default function Browse() {
                 </div>
                 
                 {/* Split layout: Map on left, List on right */}
-                <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-320px)] min-h-[500px]">
+                <div 
+                  ref={splitContainerRef}
+                  className="flex flex-col lg:flex-row h-[calc(100vh-320px)] min-h-[500px] relative"
+                >
                   {/* Map Panel */}
-                  <div className="w-full lg:w-1/2 h-full">
+                  <div 
+                    className="w-full h-full"
+                    style={{ 
+                      width: viewMode === 'split' ? `${splitRatio}%` : '100%',
+                      minWidth: viewMode === 'split' ? '30%' : undefined,
+                      maxWidth: viewMode === 'split' ? '70%' : undefined
+                    }}
+                  >
                     {isLoading ? (
                       <Card className="h-full flex items-center justify-center">
                         <div className="text-center">
@@ -510,8 +568,29 @@ export default function Browse() {
                     )}
                   </div>
                   
+                  {/* Draggable Divider */}
+                  <div 
+                    className="hidden lg:block w-1 bg-border hover:bg-primary/50 cursor-col-resize transition-colors relative group"
+                    onMouseDown={handleMouseDown}
+                    style={{ cursor: isDragging ? 'col-resize' : undefined }}
+                  >
+                    <div className="absolute inset-y-0 -left-1 -right-1" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-12 bg-background border border-border rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                      </svg>
+                    </div>
+                  </div>
+                  
                   {/* List Panel */}
-                  <div className="w-full lg:w-1/2 h-full overflow-y-auto">
+                  <div 
+                    className="w-full h-full overflow-y-auto"
+                    style={{ 
+                      width: viewMode === 'split' ? `${100 - splitRatio}%` : '100%',
+                      minWidth: viewMode === 'split' ? '30%' : undefined,
+                      maxWidth: viewMode === 'split' ? '70%' : undefined
+                    }}
+                  >
                     {isLoading ? (
                       <div className="grid grid-cols-1 gap-4">
                         {[1, 2, 3].map((i) => (
