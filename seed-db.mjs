@@ -13,6 +13,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Kadıköy",
+    latitude: "40.9873",
+    longitude: "29.0251",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
@@ -26,6 +28,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Kadıköy",
+    latitude: "40.9873",
+    longitude: "29.0251",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800"
     ])
@@ -38,6 +42,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Beşiktaş",
+    latitude: "41.0422",
+    longitude: "29.0074",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800"
@@ -50,6 +56,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Beşiktaş",
+    latitude: "41.0422",
+    longitude: "29.0074",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"
     ])
@@ -62,6 +70,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Sarıyer",
+    latitude: "41.1686",
+    longitude: "29.0544",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
@@ -76,6 +86,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Şişli",
+    latitude: "41.0602",
+    longitude: "28.9875",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800"
     ])
@@ -87,6 +99,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Şişli",
+    latitude: "41.0602",
+    longitude: "28.9875",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
       "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800"
@@ -100,6 +114,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Çankaya",
+    latitude: "39.9180",
+    longitude: "32.8628",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800"
     ])
@@ -111,6 +127,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Çankaya",
+    latitude: "39.9180",
+    longitude: "32.8628",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800"
     ])
@@ -123,6 +141,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Keçiören",
+    latitude: "39.9808",
+    longitude: "32.8625",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800"
     ])
@@ -135,6 +155,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Etimesgut",
+    latitude: "39.9478",
+    longitude: "32.6750",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800"
     ])
@@ -147,6 +169,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Konak",
+    latitude: "38.4189",
+    longitude: "27.1287",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"
@@ -159,6 +183,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Konak",
+    latitude: "38.4189",
+    longitude: "27.1287",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800"
     ])
@@ -171,6 +197,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Karşıyaka",
+    latitude: "38.4598",
+    longitude: "27.1049",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
       "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800"
@@ -183,6 +211,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Karşıyaka",
+    latitude: "38.4598",
+    longitude: "27.1049",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
     ])
@@ -195,6 +225,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Bornova",
+    latitude: "38.4697",
+    longitude: "27.2142",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800"
     ])
@@ -207,6 +239,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Çeşme",
+    latitude: "38.3231",
+    longitude: "26.3025",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800",
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
@@ -222,6 +256,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Urla",
+    latitude: "38.3228",
+    longitude: "26.7686",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800"
@@ -235,6 +271,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Üsküdar",
+    latitude: "41.0224",
+    longitude: "29.0149",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800"
     ])
@@ -246,6 +284,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Bakırköy",
+    latitude: "40.9833",
+    longitude: "28.8597",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800"
     ])
@@ -257,6 +297,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Maltepe",
+    latitude: "40.9336",
+    longitude: "29.1272",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
     ])
@@ -269,6 +311,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Yenimahalle",
+    latitude: "39.9847",
+    longitude: "32.7594",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800"
     ])
@@ -280,6 +324,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Mamak",
+    latitude: "39.9208",
+    longitude: "32.9167",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800"
     ])
@@ -292,6 +338,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Bayraklı",
+    latitude: "38.4622",
+    longitude: "27.1586",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800"
     ])
@@ -303,6 +351,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Gaziemir",
+    latitude: "38.3250",
+    longitude: "27.1333",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800"
     ])
@@ -314,6 +364,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Narlıdere",
+    latitude: "38.4025",
+    longitude: "27.0283",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800"
@@ -327,6 +379,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Ataşehir",
+    latitude: "40.9827",
+    longitude: "29.1237",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800"
     ])
@@ -338,6 +392,8 @@ const propertyData = [
     categoryId: 1,
     city: "İstanbul",
     district: "Pendik",
+    latitude: "40.8783",
+    longitude: "29.2333",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800"
     ])
@@ -349,6 +405,8 @@ const propertyData = [
     categoryId: 1,
     city: "İzmir",
     district: "Buca",
+    latitude: "38.3833",
+    longitude: "27.1833",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800"
     ])
@@ -360,6 +418,8 @@ const propertyData = [
     categoryId: 1,
     city: "Ankara",
     district: "Sincan",
+    latitude: "39.9667",
+    longitude: "32.5833",
     images: JSON.stringify([
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800"
     ])
@@ -389,8 +449,8 @@ async function seedDatabase() {
     
     for (const property of propertyData) {
       await connection.execute(
-        `INSERT INTO listings (title, description, price, categoryId, city, district, images, userId, status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO listings (title, description, price, categoryId, city, district, latitude, longitude, images, userId, status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           property.title,
           property.description,
@@ -398,8 +458,10 @@ async function seedDatabase() {
           property.categoryId,
           property.city,
           property.district,
+          property.latitude,
+          property.longitude,
           property.images,
-          ownerId,
+          1, // userId
           'active'
         ]
       );

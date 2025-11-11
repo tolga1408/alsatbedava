@@ -102,7 +102,7 @@ export default function Browse() {
     minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
     categoryId: filters.categoryId,
-    bounds: viewMode === "map" && autoUpdate && mapBounds ? mapBounds : undefined,
+    bounds: (viewMode === "map" || viewMode === "split") && autoUpdate && mapBounds ? mapBounds : undefined,
   });
 
   // Draggable divider handlers

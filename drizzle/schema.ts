@@ -54,6 +54,8 @@ export const listings = mysqlTable("listings", {
   city: varchar("city", { length: 100 }).notNull(),
   district: varchar("district", { length: 100 }),
   neighborhood: varchar("neighborhood", { length: 100 }),
+  latitude: varchar("latitude", { length: 20 }), // Decimal degrees, e.g., "41.0082"
+  longitude: varchar("longitude", { length: 20 }), // Decimal degrees, e.g., "28.9784"
   
   // Images (JSON array of S3 URLs)
   images: text("images"), // JSON: ["url1", "url2", ...]
@@ -111,3 +113,19 @@ export const reports = mysqlTable("reports", {
 
 export type Report = typeof reports.$inferSelect;
 export type InsertReport = typeof reports.$inferInsert;
+
+// Saved Searches table (user search preferences with notifications)
+export const savedSearches = mysqlTable("savedSearches", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 100 }).notNull(), // User-defined name for the search
+  filters: text("filters").notNull(), // JSON: { city, minPrice, maxPrice, categoryId, etc. }
+  isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = paused
+  emailNotifications: int("emailNotifications").default(1).notNull(), // 1 = enabled, 0 = disabled
+  lastNotifiedAt: timestamp("lastNotifiedAt"), // Last time user was notified
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SavedSearch = typeof savedSearches.$inferSelect;
+export type InsertSavedSearch = typeof savedSearches.$inferInsert;

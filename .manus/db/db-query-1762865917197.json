@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, title, city, district, latitude, longitude FROM listings LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 463YxMHGFVirvUZ.root --database Lv6kzoq2EvwYzyqAEpkddT --execute SELECT id, title, city, district, latitude, longitude FROM listings LIMIT 5;",
+  "rows": [
+    {
+      "id": "30005",
+      "title": "Kadıköy Moda'da Deniz Manzaralı 3+1 Daire",
+      "city": "İstanbul",
+      "district": "Kadıköy",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "30006",
+      "title": "Kadıköy Merkez'de Satılık Dükkan",
+      "city": "İstanbul",
+      "district": "Kadıköy",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "30007",
+      "title": "Beşiktaş'ta Boğaz Manzaralı 4+1 Lüks Daire",
+      "city": "İstanbul",
+      "district": "Beşiktaş",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "30008",
+      "title": "Beşiktaş'ta Yatırımlık 2+1 Daire",
+      "city": "İstanbul",
+      "district": "Beşiktaş",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "30009",
+      "title": "Sarıyer Zekeriyaköy'de Müstakil Villa",
+      "city": "İstanbul",
+      "district": "Sarıyer",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tcity\tdistrict\tlatitude\tlongitude\n30005\tKadıköy Moda'da Deniz Manzaralı 3+1 Daire\tİstanbul\tKadıköy\tNULL\tNULL\n30006\tKadıköy Merkez'de Satılık Dükkan\tİstanbul\tKadıköy\tNULL\tNULL\n30007\tBeşiktaş'ta Boğaz Manzaralı 4+1 Lüks Daire\tİstanbul\tBeşiktaş\tNULL\tNULL\n30008\tBeşiktaş'ta Yatırımlık 2+1 Daire\tİstanbul\tBeşiktaş\tNULL\tNULL\n30009\tSarıyer Zekeriyaköy'de Müstakil Villa\tİstanbul\tSarıyer\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1482
+}

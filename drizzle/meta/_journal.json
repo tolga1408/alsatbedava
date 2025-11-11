@@ -15,6 +15,13 @@
       "when": 1761899744515,
       "tag": "0001_massive_mathemanic",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1762865394408,
+      "tag": "0002_tough_zuras",
+      "breakpoints": true
     }
   ]
 }

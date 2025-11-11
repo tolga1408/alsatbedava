@@ -141,3 +141,27 @@
 - [x] Save/restore auto-update toggle state
 - [x] Implement useLocalStorage custom hook
 - [x] Handle edge cases (invalid data, version changes)
+
+## Precise Lat/Lng Coordinates (NEW)
+- [x] Add latitude and longitude columns to listings table
+- [x] Update seed script with accurate coordinates for all 30 listings
+- [x] Update MapView to use precise coordinates instead of city-level
+- [x] Update backend search to filter by precise bounds
+- [x] Test map positioning accuracy
+
+## Marker Clustering (NEW)
+- [x] Install react-leaflet-cluster package
+- [x] Integrate clustering into MapView component (rewrote with React-Leaflet)
+- [x] Configure cluster styling to match brand colors
+- [x] Test clustering with 30+ listings (working perfectly!)
+- [x] Optimize cluster zoom behavior
+
+## Saved Searches Feature (NEW)
+- [ ] Add savedSearches table to schema (userId, name, filters, createdAt)
+- [ ] Create backend procedures for CRUD operations
+- [ ] Build SavedSearches UI component
+- [ ] Add "Save Search" button to browse page
+- [ ] Add "My Saved Searches" page
+- [ ] Implement email notification system
+- [ ] Create background job to check for new matching listings
+- [ ] Send email alerts when new listings match saved searches
