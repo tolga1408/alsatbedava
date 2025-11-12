@@ -157,11 +157,32 @@
 - [x] Optimize cluster zoom behavior
 
 ## Saved Searches Feature (NEW)
-- [ ] Add savedSearches table to schema (userId, name, filters, createdAt)
-- [ ] Create backend procedures for CRUD operations
-- [ ] Build SavedSearches UI component
-- [ ] Add "Save Search" button to browse page
-- [ ] Add "My Saved Searches" page
-- [ ] Implement email notification system
+- [x] Add savedSearches table to schema (userId, name, filters, createdAt)
+- [x] Create backend procedures for CRUD operations (create, list, delete, toggleNotifications)
+- [x] Build SavedSearches UI component with cards and toggle switches
+- [x] Add "Save Search" button to browse page (shows when filters active)
+- [x] Add "My Saved Searches" page at /saved-searches
+- [x] Add navigation link to saved searches in header
+- [ ] Implement email notification system (backend ready, needs cron job)
 - [ ] Create background job to check for new matching listings
 - [ ] Send email alerts when new listings match saved searches
+
+
+## District-Level Filtering (NEW)
+- [ ] Extend location data structure to include districts
+- [ ] Add popular districts for Istanbul (Kadıköy, Beşiktaş, Şişli, Sarıyer, Üsküdar, Bakırköy)
+- [ ] Add popular districts for Ankara (Çankaya, Keçiören, Etimesgut, Yenimahalle)
+- [ ] Add popular districts for Izmir (Konak, Karşıyaka, Bornova, Urla, Çeşme)
+- [ ] Update Browse page filters with district dropdown
+- [ ] Update backend search to filter by district
+- [ ] Test district filtering with map view
+
+## Listing Comparison Tool (NEW)
+- [ ] Add "Compare" checkbox to listing cards
+- [ ] Create comparison state management (max 4 listings)
+- [ ] Build comparison page/modal UI
+- [ ] Display side-by-side property specs table
+- [ ] Add remove from comparison functionality
+- [ ] Show visual differences (price, size, rooms)
+- [ ] Add "Clear All" and "Compare" buttons
+- [ ] Test comparison with different property types

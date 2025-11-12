@@ -8,7 +8,9 @@ import {
   categories,
   favorites,
   messages,
-  reports 
+  reports,
+  savedSearches,
+  InsertSavedSearch
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -346,4 +348,67 @@ export async function getConversationMessages(userId: number, partnerId: number,
     );
   
   return msgs;
+}
+
+
+// ===== Saved Searches Functions =====
+
+export async function createSavedSearch(data: {
+  userId: number;
+  name: string;
+  filters: string; // JSON string
+  emailNotifications?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(savedSearches).values({
+    userId: data.userId,
+    name: data.name,
+    filters: data.filters,
+    emailNotifications: data.emailNotifications ?? 1,
+    isActive: 1,
+  });
+
+  return result;
+}
+
+export async function getUserSavedSearches(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(savedSearches)
+    .where(eq(savedSearches.userId, userId))
+    .orderBy(desc(savedSearches.createdAt));
+}
+
+export async function deleteSavedSearch(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .delete(savedSearches)
+    .where(and(
+      eq(savedSearches.id, id),
+      eq(savedSearches.userId, userId)
+    ));
+
+  return { success: true };
+}
+
+export async function toggleSavedSearchNotifications(id: number, userId: number, enabled: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(savedSearches)
+    .set({ emailNotifications: enabled ? 1 : 0 })
+    .where(and(
+      eq(savedSearches.id, id),
+      eq(savedSearches.userId, userId)
+    ));
+
+  return { success: true };
 }

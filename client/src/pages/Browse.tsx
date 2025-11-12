@@ -4,6 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,11 +37,13 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Link, useLocation } from "wouter";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 import { MapView } from "@/components/MapView";
 
 export default function Browse() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const utils = trpc.useUtils();
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useLocalStorage<"list" | "map" | "split">("alsatbedava_viewMode", "list");
   const [autoUpdate, setAutoUpdate] = useLocalStorage("alsatbedava_autoUpdate", true);
@@ -41,6 +51,8 @@ export default function Browse() {
   const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
   const [splitRatio, setSplitRatio] = useLocalStorage("alsatbedava_splitRatio", 50); // 50% = equal split
   const [isDragging, setIsDragging] = useState(false);
+  const [showSaveSearchDialog, setShowSaveSearchDialog] = useState(false);
+  const [saveSearchName, setSaveSearchName] = useState("");
   const boundsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const listingRefs = useRef<Record<number, HTMLDivElement>>({});
   const splitContainerRef = useRef<HTMLDivElement>(null);
@@ -104,6 +116,35 @@ export default function Browse() {
     categoryId: filters.categoryId,
     bounds: (viewMode === "map" || viewMode === "split") && autoUpdate && mapBounds ? mapBounds : undefined,
   });
+
+  const saveSearchMutation = trpc.savedSearches.create.useMutation({
+    onSuccess: () => {
+      toast.success("Arama başarıyla kaydedildi!");
+      setShowSaveSearchDialog(false);
+      setSaveSearchName("");
+    },
+    onError: () => {
+      toast.error("Arama kaydedilemedi");
+    },
+  });
+
+  const handleSaveSearch = () => {
+    if (!saveSearchName.trim()) {
+      toast.error("Lütfen arama için bir isim girin");
+      return;
+    }
+
+    saveSearchMutation.mutate({
+      name: saveSearchName,
+      filters: {
+        city: filters.city === "all" ? undefined : filters.city,
+        minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
+        maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
+        categoryId: filters.categoryId,
+      },
+      emailNotifications: true,
+    });
+  };
 
   // Draggable divider handlers
   const handleMouseDown = () => {
@@ -471,6 +512,17 @@ export default function Browse() {
                     <MapPin className="w-3 h-3 mr-1" />
                     {filters.city}
                   </Badge>
+                )}
+                {user && (filters.city !== "all" || filters.minPrice || filters.maxPrice || filters.search) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSaveSearchDialog(true)}
+                    className="gap-2"
+                  >
+                    <Heart className="w-4 h-4" />
+                    Aramayı Kaydet
+                  </Button>
                 )}
                 <div className="flex border rounded-lg overflow-hidden">
                   <Button
@@ -912,6 +964,57 @@ export default function Browse() {
           </div>
         </div>
       </div>
+
+      {/* Save Search Dialog */}
+      <Dialog open={showSaveSearchDialog} onOpenChange={setShowSaveSearchDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aramayı Kaydet</DialogTitle>
+            <DialogDescription>
+              Bu arama kriterlerinizi kaydedin ve yeni ilanlardan e-posta ile haberdar olun.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="search-name">Arama Adı</Label>
+              <Input
+                id="search-name"
+                placeholder="Örn: İstanbul'da 2-4M TL arası daireler"
+                value={saveSearchName}
+                onChange={(e) => setSaveSearchName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSaveSearch();
+                  }
+                }}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium mb-1">Kaydedilecek filtreler:</p>
+              <ul className="list-disc list-inside space-y-1">
+                {filters.city !== "all" && <li>Şehir: {filters.city}</li>}
+                {filters.minPrice && <li>Min Fiyat: {parseFloat(filters.minPrice).toLocaleString()} ₺</li>}
+                {filters.maxPrice && <li>Max Fiyat: {parseFloat(filters.maxPrice).toLocaleString()} ₺</li>}
+                {!filters.city && !filters.minPrice && !filters.maxPrice && (
+                  <li className="text-muted-foreground">Tüm ilanlar</li>
+                )}
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveSearchDialog(false)}>
+              İptal
+            </Button>
+            <Button
+              onClick={handleSaveSearch}
+              disabled={saveSearchMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {saveSearchMutation.isPending ? "Kaydediliyor..." : "Kaydet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

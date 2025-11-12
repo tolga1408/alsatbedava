@@ -125,6 +125,9 @@ export default function Home() {
                 <Link href="/my-listings">
                   <Button variant="ghost">İlanlarım</Button>
                 </Link>
+                <Link href="/saved-searches">
+                  <Button variant="ghost">Kayıtlı Aramalar</Button>
+                </Link>
                 <Link href="/messages">
                   <Button variant="ghost">Mesajlar</Button>
                 </Link>

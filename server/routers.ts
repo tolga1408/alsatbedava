@@ -213,6 +213,54 @@ export const appRouter = router({
         return await getConversationMessages(ctx.user.id, input.partnerId, input.listingId);
       }),
   }),
+
+  savedSearches: router({
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        filters: z.object({
+          categoryId: z.number().optional(),
+          city: z.string().optional(),
+          minPrice: z.number().optional(),
+          maxPrice: z.number().optional(),
+        }),
+        emailNotifications: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { createSavedSearch } = await import('./db');
+        return await createSavedSearch({
+          userId: ctx.user.id,
+          name: input.name,
+          filters: JSON.stringify(input.filters),
+          emailNotifications: input.emailNotifications ? 1 : 0,
+        });
+      }),
+
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getUserSavedSearches } = await import('./db');
+        const searches = await getUserSavedSearches(ctx.user.id);
+        // Parse filters JSON for each search
+        return searches.map(s => ({
+          ...s,
+          filters: JSON.parse(s.filters),
+        }));
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { deleteSavedSearch } = await import('./db');
+        return await deleteSavedSearch(input.id, ctx.user.id);
+      }),
+
+    toggleNotifications: protectedProcedure
+      .input(z.object({ id: z.number(), enabled: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        const { toggleSavedSearchNotifications } = await import('./db');
+        return await toggleSavedSearchNotifications(input.id, ctx.user.id, input.enabled);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
