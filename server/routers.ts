@@ -54,6 +54,7 @@ export const appRouter = router({
       .input(z.object({
         categoryId: z.number().optional(),
         city: z.string().optional(),
+        district: z.string().optional(),
         minPrice: z.number().optional(),
         maxPrice: z.number().optional(),
         status: z.string().optional(),

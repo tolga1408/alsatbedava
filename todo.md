@@ -169,13 +169,14 @@
 
 
 ## District-Level Filtering (NEW)
-- [ ] Extend location data structure to include districts
-- [ ] Add popular districts for Istanbul (Kadıköy, Beşiktaş, Şişli, Sarıyer, Üsküdar, Bakırköy)
-- [ ] Add popular districts for Ankara (Çankaya, Keçiören, Etimesgut, Yenimahalle)
-- [ ] Add popular districts for Izmir (Konak, Karşıyaka, Bornova, Urla, Çeşme)
-- [ ] Update Browse page filters with district dropdown
-- [ ] Update backend search to filter by district
-- [ ] Test district filtering with map view
+- [x] Add district column to listings table schema (already exists)
+- [x] Update seed script with districts for all 30 listings (already done)
+- [x] Add popular districts for Istanbul (Kadıköy, Beşiktaş, Şişli, Sarıyer, Üsküdar, Bakırköy, Kartal, Maltepe, Pendik, Avcılar)
+- [x] Add popular districts for Ankara (Çankaya, Keçiören, Etimesgut, Yenimahalle, Mamak, Altındağ, Sincan, Pursaklar)
+- [x] Add popular districts for Izmir (Konak, Karşıyaka, Bornova, Urla, Çeşme, Buca, Gaziemir, Balçova)
+- [x] Update Browse page filters with district dropdown (shows when city selected)
+- [x] Update backend search to filter by district
+- [ ] Test district filtering with map view and saved searches
 
 ## Listing Comparison Tool (NEW)
 - [ ] Add "Compare" checkbox to listing cards

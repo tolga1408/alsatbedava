@@ -59,6 +59,7 @@ export default function Browse() {
   const [filters, setFilters] = useState({
     search: "",
     city: "all",
+    district: "all",
     minPrice: "",
     maxPrice: "",
     categoryId: 1, // Emlak
@@ -111,6 +112,7 @@ export default function Browse() {
 
   const { data: listings, isLoading } = trpc.listings.search.useQuery({
     city: filters.city === "all" ? undefined : filters.city,
+    district: filters.district === "all" ? undefined : filters.district,
     minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
     categoryId: filters.categoryId,
@@ -208,6 +210,25 @@ export default function Browse() {
     "Denizli",
   ];
 
+  // District mapping by city
+  const districtsByCity: Record<string, string[]> = {
+    "İstanbul": ["Kadıköy", "Beşiktaş", "Şişli", "Sarıyer", "Üsküdar", "Bakırköy", "Kartal", "Maltepe", "Pendik", "Avcılar"],
+    "Ankara": ["Çankaya", "Keçiören", "Etimesgut", "Yenimahalle", "Mamak", "Altındağ", "Sincan", "Pursaklar"],
+    "İzmir": ["Konak", "Karşıyaka", "Bornova", "Urla", "Çeşme", "Buca", "Gaziemir", "Balçova"],
+  };
+
+  // Get districts for selected city
+  const availableDistricts = filters.city && filters.city !== "all" ? districtsByCity[filters.city] || [] : [];
+
+  // Reset district when city changes
+  useEffect(() => {
+    if (filters.city === "all" || !districtsByCity[filters.city]) {
+      if (filters.district !== "all") {
+        setFilters(prev => ({ ...prev, district: "all" }));
+      }
+    }
+  }, [filters.city]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -266,7 +287,8 @@ export default function Browse() {
                     onClick={() =>
                       setFilters({
                         search: "",
-                        city: "",
+                        city: "all",
+                        district: "all",
                         minPrice: "",
                         maxPrice: "",
                         categoryId: 1,
@@ -316,6 +338,31 @@ export default function Browse() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* District (shows when city is selected) */}
+                {availableDistricts.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="district">İlçe</Label>
+                    <Select
+                      value={filters.district}
+                      onValueChange={(value) =>
+                        setFilters({ ...filters, district: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tüm ilçeler" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm ilçeler</SelectItem>
+                        {availableDistricts.map((district) => (
+                          <SelectItem key={district} value={district}>
+                            {district}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {/* Price Range */}
                 <div className="space-y-2">
@@ -447,6 +494,31 @@ export default function Browse() {
                   </Select>
                 </div>
 
+                {/* District (shows when city is selected) - Mobile */}
+                {availableDistricts.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="district-mobile">İlçe</Label>
+                    <Select
+                      value={filters.district}
+                      onValueChange={(value) =>
+                        setFilters({ ...filters, district: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tüm ilçeler" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm ilçeler</SelectItem>
+                        {availableDistricts.map((district) => (
+                          <SelectItem key={district} value={district}>
+                            {district}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Fiyat Aralığı (₺)</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -477,6 +549,7 @@ export default function Browse() {
                     setFilters({
                       search: "",
                       city: "all",
+                      district: "all",
                       minPrice: "",
                       maxPrice: "",
                       categoryId: 1,
@@ -949,7 +1022,8 @@ export default function Browse() {
                     onClick={() =>
                       setFilters({
                         search: "",
-                        city: "",
+                        city: "all",
+                        district: "all",
                         minPrice: "",
                         maxPrice: "",
                         categoryId: 1,
@@ -993,9 +1067,10 @@ export default function Browse() {
               <p className="font-medium mb-1">Kaydedilecek filtreler:</p>
               <ul className="list-disc list-inside space-y-1">
                 {filters.city !== "all" && <li>Şehir: {filters.city}</li>}
+                {filters.district !== "all" && <li>İlçe: {filters.district}</li>}
                 {filters.minPrice && <li>Min Fiyat: {parseFloat(filters.minPrice).toLocaleString()} ₺</li>}
                 {filters.maxPrice && <li>Max Fiyat: {parseFloat(filters.maxPrice).toLocaleString()} ₺</li>}
-                {!filters.city && !filters.minPrice && !filters.maxPrice && (
+                {filters.city === "all" && filters.district === "all" && !filters.minPrice && !filters.maxPrice && (
                   <li className="text-muted-foreground">Tüm ilanlar</li>
                 )}
               </ul>

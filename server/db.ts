@@ -148,6 +148,7 @@ export async function searchListings(params: {
   minPrice?: number;
   maxPrice?: number;
   city?: string;
+  district?: string;
   status?: string;
   limit?: number;
   offset?: number;
@@ -166,6 +167,9 @@ export async function searchListings(params: {
   }
   if (params.city) {
     conditions.push(eq(listings.city, params.city));
+  }
+  if (params.district) {
+    conditions.push(eq(listings.district, params.district));
   }
   
   // Filter by bounds if provided (using city coordinates)
