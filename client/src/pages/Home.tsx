@@ -24,8 +24,18 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 
 export default function Home() {
+  // SEO optimization
+  useSEO({
+    title: 'Alsatbedava.com - Türkiye\'nin Adil Pazarı | Al, Sat, Komisyon Ödeme',
+    description: 'Gerçek ilanlar, adil fiyatlar, sıfır komisyon. Sahibinden\'e alternatif. Emlak, araç, elektronik ve daha fazlası. 12,847 ilan, 45,231 kullanıcı.',
+    keywords: 'emlak, araç, ikinci el, ilan sitesi, sahibinden alternatif, ücretsiz ilan, gayrimenkul, satılık daire, kiralık ev',
+    url: 'https://alsatbedava.com',
+    type: 'website',
+  });
+
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");

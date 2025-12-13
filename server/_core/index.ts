@@ -35,6 +35,19 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Sitemap route
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const { generateSitemap } = await import('../sitemap');
+      const xml = await generateSitemap();
+      res.header('Content-Type', 'application/xml');
+      res.send(xml);
+    } catch (error) {
+      console.error('[Sitemap] Generation error:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",
