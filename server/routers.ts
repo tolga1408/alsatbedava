@@ -261,6 +261,17 @@ export const appRouter = router({
         const { toggleSavedSearchNotifications } = await import('./db');
         return await toggleSavedSearchNotifications(input.id, ctx.user.id, input.enabled);
       }),
+
+    triggerNotifications: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        // Only allow admin users to trigger notifications
+        if (ctx.user.role !== 'admin') {
+          throw new Error('Unauthorized: Admin access required');
+        }
+        const { processSavedSearchNotifications } = await import('./jobs/savedSearchNotifications');
+        const result = await processSavedSearchNotifications();
+        return result;
+      }),
   }),
 });
 
