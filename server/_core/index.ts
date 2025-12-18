@@ -72,6 +72,17 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Start automated scheduler for saved search notifications
+    if (process.env.NODE_ENV === "production") {
+      import('../jobs/scheduler').then(({ startScheduler }) => {
+        startScheduler();
+      }).catch(error => {
+        console.error('[Scheduler] Failed to start:', error);
+      });
+    } else {
+      console.log('[Scheduler] Skipped in development mode (use /admin for manual trigger)');
+    }
   });
 }
 
