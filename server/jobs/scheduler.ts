@@ -7,7 +7,7 @@ import { processSavedSearchNotifications } from './savedSearchNotifications';
  * 
  * To change schedule, modify the cron expression:
  * - '0 8,20 * * *' = 8 AM and 8 PM daily
- * - '0 */12 * * *' = Every 12 hours
+ * - '0 every-12-hours * * *' = Every 12 hours
  * - '0 0 * * *' = Midnight daily
  * - '0 9 * * 1-5' = 9 AM on weekdays
  * 
