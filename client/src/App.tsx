@@ -12,12 +12,13 @@ import MyListings from "./pages/MyListings";
 import Messages from "./pages/Messages";
 import SavedSearches from "./pages/SavedSearches";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/browse" component={Browse} />
       <Route path="/create-listing" component={CreateListing} />
       <Route path="/listing/:id" component={ListingDetail} />
@@ -25,25 +26,16 @@ function Router() {
       <Route path="/messages" component={Messages} />
       <Route path="/saved-searches" component={SavedSearches} />
       <Route path="/admin" component={Admin} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />
