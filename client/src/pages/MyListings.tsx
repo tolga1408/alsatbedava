@@ -61,22 +61,18 @@ export default function MyListings() {
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/">
-              <a className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">AB</span>
-                </div>
-                <span className="font-bold text-xl">Alsatbedava</span>
-              </a>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">AB</span>
+              </div>
+              <span className="font-bold text-xl">Alsatbedava</span>
             </Link>
 
             <Link href="/create-listing">
-              <a>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Yeni İlan
-                </Button>
-              </a>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Yeni İlan
+              </Button>
             </Link>
           </div>
         </div>
@@ -138,12 +134,13 @@ export default function MyListings() {
                         </div>
 
                         <div className="flex gap-2">
-                          <Link href={`/listing/${listing.id}`}>
-                            <a className="flex-1">
-                              <Button variant="outline" className="w-full">
-                                Görüntüle
-                              </Button>
-                            </a>
+                          <Link
+                            href={`/listing/${listing.id}`}
+                            className="flex-1"
+                          >
+                            <Button variant="outline" className="w-full">
+                              Görüntüle
+                            </Button>
                           </Link>
                           <Button
                             variant="destructive"
@@ -169,12 +166,10 @@ export default function MyListings() {
                   <Home className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">Henüz aktif ilanınız yok</p>
                   <Link href="/create-listing">
-                    <a>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        İlk İlanınızı Oluşturun
-                      </Button>
-                    </a>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      İlk İlanınızı Oluşturun
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>

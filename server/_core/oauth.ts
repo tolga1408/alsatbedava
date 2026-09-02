@@ -2,6 +2,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
+import { ENV } from "./env";
 import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
@@ -9,7 +10,42 @@ function getQueryParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function getSafeRedirect(req: Request) {
+  const redirect = getQueryParam(req, "redirect") ?? "/";
+  if (!redirect.startsWith("/") || redirect.startsWith("//")) return "/";
+  return redirect;
+}
+
 export function registerOAuthRoutes(app: Express) {
+  app.get("/api/demo-login", async (req: Request, res: Response) => {
+    if (!ENV.demoMode) {
+      res.status(404).json({ error: "Demo login is not enabled" });
+      return;
+    }
+
+    const openId = "demo-user";
+    const name = "Demo Kullanıcı";
+    await db.upsertUser({
+      openId,
+      name,
+      email: "demo@example.com",
+      loginMethod: "demo",
+      lastSignedIn: new Date(),
+    });
+
+    const sessionToken = await sdk.createSessionToken(openId, {
+      name,
+      expiresInMs: ONE_YEAR_MS,
+    });
+
+    const cookieOptions = getSessionCookieOptions(req);
+    res.cookie(COOKIE_NAME, sessionToken, {
+      ...cookieOptions,
+      maxAge: ONE_YEAR_MS,
+    });
+    res.redirect(302, getSafeRedirect(req));
+  });
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");

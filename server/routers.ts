@@ -1,5 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -173,7 +174,13 @@ export const appRouter = router({
         const ext = input.filename.split('.').pop();
         const key = `listings/${ctx.user.id}/${timestamp}-${randomStr}.${ext}`;
         
-        // Upload to S3
+        if (ENV.demoMode && !process.env.S3_ENDPOINT) {
+          return {
+            url: `data:${input.mimeType};base64,${base64Data}`,
+            key: `demo/${key}`,
+          };
+        }
+
         const result = await storagePut(key, buffer, input.mimeType);
         
         return { url: result.url, key };

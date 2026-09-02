@@ -86,11 +86,12 @@ export default function CreateListing() {
       {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4">
-          <Link href="/">
-            <a className="flex items-center gap-2 text-gray-700 hover:text-gray-900">
-              <ArrowLeft className="h-5 w-5" />
-              Ana Sayfaya Dön
-            </a>
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Ana Sayfaya Dön
           </Link>
         </div>
       </header>

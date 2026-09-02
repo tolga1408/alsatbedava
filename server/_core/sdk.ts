@@ -222,7 +222,8 @@ class SDKServer {
   }
 
   private getSessionSecret() {
-    const secret = ENV.cookieSecret;
+    const secret =
+      ENV.cookieSecret || (ENV.demoMode ? "alsatbedava-demo-session-secret" : "");
     return new TextEncoder().encode(secret);
   }
 
@@ -233,7 +234,7 @@ class SDKServer {
     return this.signSession(
       {
         openId,
-        clientId: ENV.oauthClientId,
+        clientId: ENV.oauthClientId || (ENV.demoMode ? "demo-client" : ""),
         name: options.name || "",
       },
       options
@@ -304,6 +305,22 @@ class SDKServer {
     }
 
     const signedInAt = new Date();
+    const database = await db.getDb();
+
+    if (!database && ENV.demoMode) {
+      return {
+        id: 1,
+        openId: session.openId,
+        name: session.name || "Demo Kullanıcı",
+        email: "demo@example.com",
+        loginMethod: "demo",
+        role: session.openId === ENV.ownerOpenId ? "admin" : "user",
+        createdAt: signedInAt,
+        updatedAt: signedInAt,
+        lastSignedIn: signedInAt,
+      };
+    }
+
     let user = await db.getUserByOpenId(session.openId);
 
     if (!user) {

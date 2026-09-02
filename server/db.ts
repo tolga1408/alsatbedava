@@ -16,6 +16,129 @@ import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
+const demoDate = () => new Date();
+
+const demoCategories = [
+  {
+    id: 1,
+    name: "Emlak",
+    slug: "emlak",
+    parentId: null,
+    icon: "home",
+    order: 1,
+    isActive: 1,
+    createdAt: demoDate(),
+  },
+];
+
+const demoUsersByOpenId = new Map<string, any>([
+  [
+    "demo-user",
+    {
+      id: 1,
+      openId: "demo-user",
+      name: "Demo Kullanıcı",
+      email: "demo@example.com",
+      loginMethod: "demo",
+      role: "user",
+      createdAt: demoDate(),
+      updatedAt: demoDate(),
+      lastSignedIn: demoDate(),
+    },
+  ],
+]);
+
+let nextDemoListingId = 30010;
+let nextDemoMessageId = 1;
+let nextDemoSavedSearchId = 1;
+
+let demoListings: any[] = [
+  {
+    id: 30005,
+    userId: 2,
+    categoryId: 1,
+    title: "Kadıköy Moda'da Deniz Manzaralı 3+1 Daire",
+    description:
+      "Moda sahiline yürüme mesafesinde, geniş balkonlu, aydınlık ve bakımlı daire.",
+    price: 7250000,
+    currency: "TRY",
+    city: "İstanbul",
+    district: "Kadıköy",
+    neighborhood: "Moda",
+    latitude: "40.9869",
+    longitude: "29.0252",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 1,
+    viewCount: 248,
+    favoriteCount: 17,
+    createdAt: demoDate(),
+    updatedAt: demoDate(),
+  },
+  {
+    id: 30006,
+    userId: 3,
+    categoryId: 1,
+    title: "Çankaya'da Site İçinde 2+1 Kiralık",
+    description:
+      "Güvenlikli site, açık otopark, merkezi konum ve temiz kullanım.",
+    price: 28500,
+    currency: "TRY",
+    city: "Ankara",
+    district: "Çankaya",
+    neighborhood: "Ayrancı",
+    latitude: "39.9075",
+    longitude: "32.8602",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 94,
+    favoriteCount: 8,
+    createdAt: demoDate(),
+    updatedAt: demoDate(),
+  },
+  {
+    id: 30007,
+    userId: 4,
+    categoryId: 1,
+    title: "İzmir Urla'da Bahçeli Müstakil Ev",
+    description:
+      "Sessiz sokakta, geniş bahçeli, aile yaşamına uygun müstakil ev.",
+    price: 9800000,
+    currency: "TRY",
+    city: "İzmir",
+    district: "Urla",
+    neighborhood: "İskele",
+    latitude: "38.3222",
+    longitude: "26.7647",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 1,
+    viewCount: 176,
+    favoriteCount: 22,
+    createdAt: demoDate(),
+    updatedAt: demoDate(),
+  },
+];
+
+let demoFavorites: any[] = [];
+let demoMessages: any[] = [];
+let demoSavedSearches: any[] = [];
+
+function useDemoStore() {
+  return ENV.demoMode && !process.env.DATABASE_URL;
+}
+
+function paginate<T>(items: T[], limit = 20, offset = 0) {
+  return items.slice(offset, offset + limit);
+}
+
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -32,6 +155,25 @@ export async function getDb() {
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
+  }
+
+  if (useDemoStore()) {
+    const existing = demoUsersByOpenId.get(user.openId);
+    demoUsersByOpenId.set(user.openId, {
+      id: existing?.id ?? demoUsersByOpenId.size + 1,
+      openId: user.openId,
+      name: user.name ?? existing?.name ?? null,
+      email: user.email ?? existing?.email ?? null,
+      loginMethod: user.loginMethod ?? existing?.loginMethod ?? "demo",
+      role:
+        user.role ??
+        existing?.role ??
+        (user.openId === ENV.ownerOpenId ? "admin" : "user"),
+      createdAt: existing?.createdAt ?? new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: user.lastSignedIn ?? new Date(),
+    });
+    return;
   }
 
   const db = await getDb();
@@ -89,6 +231,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 }
 
 export async function getUserByOpenId(openId: string) {
+  if (useDemoStore()) {
+    return demoUsersByOpenId.get(openId);
+  }
+
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get user: database not available");
@@ -102,6 +248,31 @@ export async function getUserByOpenId(openId: string) {
 
 // Listing queries
 export async function createListing(listing: InsertListing) {
+  if (useDemoStore()) {
+    const now = new Date();
+    const id = nextDemoListingId++;
+    demoListings = [
+      {
+        id,
+        currency: "TRY",
+        district: null,
+        neighborhood: null,
+        latitude: null,
+        longitude: null,
+        images: null,
+        isFeatured: 0,
+        viewCount: 0,
+        favoriteCount: 0,
+        createdAt: now,
+        updatedAt: now,
+        ...listing,
+        status: listing.status ?? "active",
+      },
+      ...demoListings,
+    ];
+    return id;
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -110,6 +281,10 @@ export async function createListing(listing: InsertListing) {
 }
 
 export async function getListingById(id: number) {
+  if (useDemoStore()) {
+    return demoListings.find(listing => listing.id === id);
+  }
+
   const db = await getDb();
   if (!db) return undefined;
   
@@ -118,6 +293,10 @@ export async function getListingById(id: number) {
 }
 
 export async function getListingsByUserId(userId: number) {
+  if (useDemoStore()) {
+    return demoListings.filter(listing => listing.userId === userId);
+  }
+
   const db = await getDb();
   if (!db) return [];
   
@@ -154,6 +333,44 @@ export async function searchListings(params: {
   offset?: number;
   bounds?: { north: number; south: number; east: number; west: number };
 }) {
+  if (useDemoStore()) {
+    let results = [...demoListings];
+
+    if (params.categoryId) {
+      results = results.filter(listing => listing.categoryId === params.categoryId);
+    }
+    if (params.status) {
+      results = results.filter(listing => listing.status === params.status);
+    }
+    if (params.city) {
+      results = results.filter(listing => listing.city === params.city);
+    }
+    if (params.district) {
+      results = results.filter(listing => listing.district === params.district);
+    }
+    if (params.minPrice !== undefined) {
+      results = results.filter(listing => listing.price >= params.minPrice!);
+    }
+    if (params.maxPrice !== undefined) {
+      results = results.filter(listing => listing.price <= params.maxPrice!);
+    }
+    if (params.bounds) {
+      results = results.filter(listing => {
+        const lat = Number(listing.latitude);
+        const lng = Number(listing.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return true;
+        return (
+          lat >= params.bounds!.south &&
+          lat <= params.bounds!.north &&
+          lng >= params.bounds!.west &&
+          lng <= params.bounds!.east
+        );
+      });
+    }
+
+    return paginate(results, params.limit || 20, params.offset || 0);
+  }
+
   const db = await getDb();
   if (!db) return [];
   
@@ -206,6 +423,13 @@ export async function searchListings(params: {
 }
 
 export async function updateListing(id: number, updates: Partial<InsertListing>) {
+  if (useDemoStore()) {
+    demoListings = demoListings.map(listing =>
+      listing.id === id ? { ...listing, ...updates, updatedAt: new Date() } : listing
+    );
+    return;
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -213,6 +437,12 @@ export async function updateListing(id: number, updates: Partial<InsertListing>)
 }
 
 export async function deleteListing(id: number) {
+  if (useDemoStore()) {
+    demoListings = demoListings.filter(listing => listing.id !== id);
+    demoFavorites = demoFavorites.filter(favorite => favorite.listingId !== id);
+    return;
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -221,6 +451,10 @@ export async function deleteListing(id: number) {
 
 // Category queries
 export async function getAllCategories() {
+  if (useDemoStore()) {
+    return demoCategories;
+  }
+
   const db = await getDb();
   if (!db) return [];
   
@@ -228,6 +462,10 @@ export async function getAllCategories() {
 }
 
 export async function getCategoryById(id: number) {
+  if (useDemoStore()) {
+    return demoCategories.find(category => category.id === id);
+  }
+
   const db = await getDb();
   if (!db) return undefined;
   
@@ -237,6 +475,22 @@ export async function getCategoryById(id: number) {
 
 // Favorites queries
 export async function addFavorite(userId: number, listingId: number) {
+  if (useDemoStore()) {
+    if (
+      !demoFavorites.some(
+        favorite => favorite.userId === userId && favorite.listingId === listingId
+      )
+    ) {
+      demoFavorites.push({
+        id: demoFavorites.length + 1,
+        userId,
+        listingId,
+        createdAt: new Date(),
+      });
+    }
+    return;
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -244,6 +498,13 @@ export async function addFavorite(userId: number, listingId: number) {
 }
 
 export async function removeFavorite(userId: number, listingId: number) {
+  if (useDemoStore()) {
+    demoFavorites = demoFavorites.filter(
+      favorite => favorite.userId !== userId || favorite.listingId !== listingId
+    );
+    return;
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -256,6 +517,10 @@ export async function removeFavorite(userId: number, listingId: number) {
 }
 
 export async function getUserFavorites(userId: number) {
+  if (useDemoStore()) {
+    return demoFavorites.filter(favorite => favorite.userId === userId);
+  }
+
   const db = await getDb();
   if (!db) return [];
   
@@ -269,6 +534,17 @@ export async function sendMessage(data: {
   listingId: number;
   content: string;
 }) {
+  if (useDemoStore()) {
+    const id = nextDemoMessageId++;
+    demoMessages.push({
+      id,
+      ...data,
+      isRead: 0,
+      createdAt: new Date(),
+    });
+    return id;
+  }
+
   const db = await getDb();
   if (!db) throw new Error('Database not available');
   
@@ -277,6 +553,29 @@ export async function sendMessage(data: {
 }
 
 export async function getConversations(userId: number) {
+  if (useDemoStore()) {
+    const conversationsMap = new Map();
+
+    for (const msg of [...demoMessages].reverse()) {
+      if (msg.senderId !== userId && msg.receiverId !== userId) continue;
+      const partnerId = msg.senderId === userId ? msg.receiverId : msg.senderId;
+
+      if (!conversationsMap.has(partnerId)) {
+        conversationsMap.set(partnerId, {
+          partnerId,
+          listingId: msg.listingId,
+          lastMessage: msg.content,
+          lastMessageAt: msg.createdAt,
+          unreadCount: msg.receiverId === userId && !msg.isRead ? 1 : 0,
+        });
+      } else if (msg.receiverId === userId && !msg.isRead) {
+        conversationsMap.get(partnerId).unreadCount += 1;
+      }
+    }
+
+    return Array.from(conversationsMap.values());
+  }
+
   const db = await getDb();
   if (!db) return [];
   
@@ -316,6 +615,25 @@ export async function getConversations(userId: number) {
 }
 
 export async function getConversationMessages(userId: number, partnerId: number, listingId: number) {
+  if (useDemoStore()) {
+    const msgs = demoMessages.filter(
+      msg =>
+        msg.listingId === listingId &&
+        ((msg.senderId === userId && msg.receiverId === partnerId) ||
+          (msg.senderId === partnerId && msg.receiverId === userId))
+    );
+
+    demoMessages = demoMessages.map(msg =>
+      msg.receiverId === userId &&
+      msg.senderId === partnerId &&
+      msg.listingId === listingId
+        ? { ...msg, isRead: 1 }
+        : msg
+    );
+
+    return msgs;
+  }
+
   const db = await getDb();
   if (!db) return [];
   
@@ -363,6 +681,23 @@ export async function createSavedSearch(data: {
   filters: string; // JSON string
   emailNotifications?: number;
 }) {
+  if (useDemoStore()) {
+    const now = new Date();
+    const savedSearch = {
+      id: nextDemoSavedSearchId++,
+      userId: data.userId,
+      name: data.name,
+      filters: data.filters,
+      emailNotifications: data.emailNotifications ?? 1,
+      isActive: 1,
+      lastNotifiedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    demoSavedSearches = [savedSearch, ...demoSavedSearches];
+    return savedSearch;
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -378,6 +713,10 @@ export async function createSavedSearch(data: {
 }
 
 export async function getUserSavedSearches(userId: number) {
+  if (useDemoStore()) {
+    return demoSavedSearches.filter(search => search.userId === userId);
+  }
+
   const db = await getDb();
   if (!db) return [];
 
@@ -389,6 +728,13 @@ export async function getUserSavedSearches(userId: number) {
 }
 
 export async function deleteSavedSearch(id: number, userId: number) {
+  if (useDemoStore()) {
+    demoSavedSearches = demoSavedSearches.filter(
+      search => search.id !== id || search.userId !== userId
+    );
+    return { success: true };
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
@@ -403,6 +749,15 @@ export async function deleteSavedSearch(id: number, userId: number) {
 }
 
 export async function toggleSavedSearchNotifications(id: number, userId: number, enabled: boolean) {
+  if (useDemoStore()) {
+    demoSavedSearches = demoSavedSearches.map(search =>
+      search.id === id && search.userId === userId
+        ? { ...search, emailNotifications: enabled ? 1 : 0, updatedAt: new Date() }
+        : search
+    );
+    return { success: true };
+  }
+
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 

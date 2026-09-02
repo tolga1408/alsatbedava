@@ -12,5 +12,8 @@ export const ENV = {
   s3SecretKey: process.env.S3_SECRET_KEY ?? "",
   s3Region: process.env.S3_REGION ?? "auto",
   s3PublicUrl: process.env.S3_PUBLIC_URL ?? "",
+  demoMode:
+    process.env.DEMO_MODE === "true" ||
+    (process.env.NODE_ENV !== "production" && !process.env.DATABASE_URL),
   isProduction: process.env.NODE_ENV === "production",
 };

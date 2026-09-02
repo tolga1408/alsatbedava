@@ -38,6 +38,17 @@ S3_REGION=auto
 S3_PUBLIC_URL=https://cdn.example.com
 ```
 
+For temporary friend testing without production services, leave the database,
+OAuth, and S3 values unset and set:
+
+```bash
+DEMO_MODE=true
+JWT_SECRET=replace-with-a-long-random-secret
+```
+
+Demo mode uses in-memory data. It is reset whenever the server restarts and is
+not intended for a real public launch.
+
 Run database migrations:
 
 ```bash
