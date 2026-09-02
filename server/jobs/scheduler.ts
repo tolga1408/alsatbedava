@@ -36,7 +36,6 @@ export function startScheduler() {
       console.error('[Scheduler] Notification job failed:', error);
     }
   }, {
-    scheduled: true,
     timezone: 'Europe/Istanbul', // Turkish timezone
   });
 

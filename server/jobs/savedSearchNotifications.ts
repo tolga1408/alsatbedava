@@ -1,7 +1,6 @@
 import { eq, and, gte } from "drizzle-orm";
 import { getDb } from "../db";
 import { savedSearches, listings, users } from "../../drizzle/schema";
-import { notifyOwner } from "../_core/notification";
 
 interface SavedSearchFilters {
   categoryId?: number;
@@ -28,11 +27,11 @@ interface NotificationResult {
 
 /**
  * Send email notification to user about new listings matching their saved search
- * Currently in test mode - logs to console and notifies owner
+ * Currently in test mode - logs to console
  * 
  * TODO: Integrate real email service (SendGrid, AWS SES, or Resend)
  * 1. Install email service package: pnpm add @sendgrid/mail (or equivalent)
- * 2. Add API key to secrets via webdev_request_secrets
+ * 2. Add API key to environment variables
  * 3. Replace this placeholder with actual email sending code
  */
 async function sendSavedSearchNotification(
@@ -226,31 +225,10 @@ export async function processSavedSearchNotifications(): Promise<NotificationRes
       }
     }
 
-    // Notify owner about job completion
-    await notifyOwner({
-      title: '📧 Saved Search Notifications Job Completed',
-      message: `
-Total searches processed: ${result.totalSearches}
-Notifications sent: ${result.notificationsSent}
-Errors: ${result.errors}
-
-Details:
-${result.details.map(d => 
-  `- ${d.searchName} (${d.userEmail}): ${d.matchingListings} listings ${d.status === 'error' ? '❌ ' + d.error : '✅'}`
-).join('\n')}
-      `.trim(),
-    });
-
     console.log('[SavedSearchNotifications] Job completed:', result);
     return result;
   } catch (error) {
     console.error('[SavedSearchNotifications] Job failed:', error);
-    
-    await notifyOwner({
-      title: '❌ Saved Search Notifications Job Failed',
-      message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    });
-    
     throw error;
   }
 }

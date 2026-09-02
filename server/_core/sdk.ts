@@ -8,87 +8,155 @@ import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
 import type {
-  ExchangeTokenRequest,
   ExchangeTokenResponse,
   GetUserInfoResponse,
-  GetUserInfoWithJwtRequest,
-  GetUserInfoWithJwtResponse,
-} from "./types/manusTypes";
-// Utility function
+  OAuthTokenEndpointResponse,
+  OAuthUserInfoResponse,
+} from "./types/oauthTypes";
+
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
+const optionalString = (value: unknown): string | null =>
+  typeof value === "string" && value.length > 0 ? value : null;
+
+const requiredString = (value: unknown): string | null => {
+  if (typeof value === "string" && value.length > 0) return value;
+  if (typeof value === "number") return String(value);
+  return null;
+};
+
 export type SessionPayload = {
   openId: string;
-  appId: string;
+  clientId: string;
   name: string;
 };
 
-const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
-const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
-const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
-
 class OAuthService {
-  constructor(private client: ReturnType<typeof axios.create>) {
-    console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
+  constructor(private client: AxiosInstance) {
+    if (!ENV.oauthTokenUrl) {
       console.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
+        "[OAuth] ERROR: OAUTH_TOKEN_URL is not configured. Set OAUTH_TOKEN_URL in the environment."
+      );
+    }
+    if (!ENV.oauthUserInfoUrl) {
+      console.error(
+        "[OAuth] ERROR: OAUTH_USERINFO_URL is not configured. Set OAUTH_USERINFO_URL in the environment."
       );
     }
   }
 
   private decodeState(state: string): string {
-    const redirectUri = atob(state);
+    const redirectUri = Buffer.from(state, "base64").toString("utf8");
+    if (!redirectUri) {
+      throw new Error("Invalid OAuth state");
+    }
     return redirectUri;
+  }
+
+  private assertTokenConfig() {
+    const missing = [
+      ["VITE_OAUTH_CLIENT_ID", ENV.oauthClientId],
+      ["OAUTH_TOKEN_URL", ENV.oauthTokenUrl],
+    ].filter(([, value]) => !value);
+
+    if (missing.length > 0) {
+      throw new Error(
+        `OAuth token exchange is not configured: ${missing
+          .map(([name]) => name)
+          .join(", ")}`
+      );
+    }
   }
 
   async getTokenByCode(
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
-    const payload: ExchangeTokenRequest = {
-      clientId: ENV.appId,
-      grantType: "authorization_code",
-      code,
-      redirectUri: this.decodeState(state),
-    };
+    this.assertTokenConfig();
 
-    const { data } = await this.client.post<ExchangeTokenResponse>(
-      EXCHANGE_TOKEN_PATH,
-      payload
+    const payload = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: this.decodeState(state),
+      client_id: ENV.oauthClientId,
+    });
+
+    if (ENV.oauthClientSecret) {
+      payload.set("client_secret", ENV.oauthClientSecret);
+    }
+
+    const { data } = await this.client.post<OAuthTokenEndpointResponse>(
+      ENV.oauthTokenUrl,
+      payload,
+      {
+        headers: {
+          accept: "application/json",
+          "content-type": "application/x-www-form-urlencoded",
+        },
+      }
     );
 
-    return data;
+    const accessToken = data.access_token ?? data.accessToken;
+    if (!isNonEmptyString(accessToken)) {
+      throw new Error("OAuth token response did not include an access token");
+    }
+
+    return {
+      accessToken,
+      tokenType: data.token_type ?? data.tokenType ?? "Bearer",
+      expiresIn: Number(data.expires_in ?? data.expiresIn ?? 0),
+      refreshToken: data.refresh_token ?? data.refreshToken,
+      scope: data.scope ?? "",
+      idToken: data.id_token ?? data.idToken ?? "",
+    };
   }
 
   async getUserInfoByToken(
     token: ExchangeTokenResponse
   ): Promise<GetUserInfoResponse> {
-    const { data } = await this.client.post<GetUserInfoResponse>(
-      GET_USER_INFO_PATH,
+    if (!ENV.oauthUserInfoUrl) {
+      throw new Error("OAUTH_USERINFO_URL is not configured");
+    }
+
+    const { data } = await this.client.get<OAuthUserInfoResponse>(
+      ENV.oauthUserInfoUrl,
       {
-        accessToken: token.accessToken,
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${token.accessToken}`,
+        },
       }
     );
 
-    return data;
-  }
-}
+    const openId =
+      requiredString(data.sub) ??
+      requiredString(data.openId) ??
+      requiredString(data.id) ??
+      requiredString(data.user_id);
 
-const createOAuthHttpClient = (): AxiosInstance =>
-  axios.create({
-    baseURL: ENV.oAuthServerUrl,
-    timeout: AXIOS_TIMEOUT_MS,
-  });
+    if (!openId) {
+      throw new Error(
+        "OAuth user info response did not include a stable user identifier"
+      );
+    }
 
-class SDKServer {
-  private readonly client: AxiosInstance;
-  private readonly oauthService: OAuthService;
+    const loginMethod = this.deriveLoginMethod(
+      data.platforms,
+      data.loginMethod ?? data.platform ?? null
+    );
 
-  constructor(client: AxiosInstance = createOAuthHttpClient()) {
-    this.client = client;
-    this.oauthService = new OAuthService(this.client);
+    return {
+      openId,
+      name:
+        optionalString(data.name) ??
+        optionalString(data.preferred_username) ??
+        optionalString(data.email) ??
+        openId,
+      email: optionalString(data.email),
+      platform: optionalString(data.platform),
+      loginMethod,
+    };
   }
 
   private deriveLoginMethod(
@@ -106,18 +174,27 @@ class SDKServer {
     if (
       set.has("REGISTERED_PLATFORM_MICROSOFT") ||
       set.has("REGISTERED_PLATFORM_AZURE")
-    )
+    ) {
       return "microsoft";
+    }
     if (set.has("REGISTERED_PLATFORM_GITHUB")) return "github";
     const first = Array.from(set)[0];
     return first ? first.toLowerCase() : null;
   }
+}
 
-  /**
-   * Exchange OAuth authorization code for access token
-   * @example
-   * const tokenResponse = await sdk.exchangeCodeForToken(code, state);
-   */
+const createOAuthHttpClient = (): AxiosInstance =>
+  axios.create({
+    timeout: AXIOS_TIMEOUT_MS,
+  });
+
+class SDKServer {
+  private readonly oauthService: OAuthService;
+
+  constructor(client: AxiosInstance = createOAuthHttpClient()) {
+    this.oauthService = new OAuthService(client);
+  }
+
   async exchangeCodeForToken(
     code: string,
     state: string
@@ -125,24 +202,14 @@ class SDKServer {
     return this.oauthService.getTokenByCode(code, state);
   }
 
-  /**
-   * Get user information using access token
-   * @example
-   * const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-   */
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
-    const data = await this.oauthService.getUserInfoByToken({
+    return this.oauthService.getUserInfoByToken({
       accessToken,
-    } as ExchangeTokenResponse);
-    const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
-    );
-    return {
-      ...(data as any),
-      platform: loginMethod,
-      loginMethod,
-    } as GetUserInfoResponse;
+      tokenType: "Bearer",
+      expiresIn: 0,
+      scope: "",
+      idToken: "",
+    });
   }
 
   private parseCookies(cookieHeader: string | undefined) {
@@ -159,11 +226,6 @@ class SDKServer {
     return new TextEncoder().encode(secret);
   }
 
-  /**
-   * Create a session token for a Manus user openId
-   * @example
-   * const sessionToken = await sdk.createSessionToken(userInfo.openId);
-   */
   async createSessionToken(
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
@@ -171,7 +233,7 @@ class SDKServer {
     return this.signSession(
       {
         openId,
-        appId: ENV.appId,
+        clientId: ENV.oauthClientId,
         name: options.name || "",
       },
       options
@@ -189,7 +251,7 @@ class SDKServer {
 
     return new SignJWT({
       openId: payload.openId,
-      appId: payload.appId,
+      clientId: payload.clientId,
       name: payload.name,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
@@ -199,7 +261,7 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<SessionPayload | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
@@ -210,21 +272,21 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, clientId, name } = payload as Record<
+        string,
+        unknown
+      >;
+      const sessionClientId = requiredString(clientId);
 
-      if (
-        !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
-      ) {
+      if (!isNonEmptyString(openId) || !sessionClientId) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }
 
       return {
         openId,
-        appId,
-        name,
+        clientId: sessionClientId,
+        name: typeof name === "string" ? name : "",
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -232,32 +294,7 @@ class SDKServer {
     }
   }
 
-  async getUserInfoWithJwt(
-    jwtToken: string
-  ): Promise<GetUserInfoWithJwtResponse> {
-    const payload: GetUserInfoWithJwtRequest = {
-      jwtToken,
-      projectId: ENV.appId,
-    };
-
-    const { data } = await this.client.post<GetUserInfoWithJwtResponse>(
-      GET_USER_INFO_WITH_JWT_PATH,
-      payload
-    );
-
-    const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
-    );
-    return {
-      ...(data as any),
-      platform: loginMethod,
-      loginMethod,
-    } as GetUserInfoWithJwtResponse;
-  }
-
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);
@@ -266,26 +303,16 @@ class SDKServer {
       throw ForbiddenError("Invalid session cookie");
     }
 
-    const sessionUserId = session.openId;
     const signedInAt = new Date();
-    let user = await db.getUserByOpenId(sessionUserId);
+    let user = await db.getUserByOpenId(session.openId);
 
-    // If user not in DB, sync from OAuth server automatically
     if (!user) {
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
-        await db.upsertUser({
-          openId: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
-        });
-        user = await db.getUserByOpenId(userInfo.openId);
-      } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
-        throw ForbiddenError("Failed to sync user info");
-      }
+      await db.upsertUser({
+        openId: session.openId,
+        name: session.name || null,
+        lastSignedIn: signedInAt,
+      });
+      user = await db.getUserByOpenId(session.openId);
     }
 
     if (!user) {

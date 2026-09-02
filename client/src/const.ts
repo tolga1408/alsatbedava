@@ -8,16 +8,18 @@ export const APP_LOGO =
 
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-  const appId = import.meta.env.VITE_APP_ID;
+  const authorizeUrl = import.meta.env.VITE_OAUTH_AUTHORIZE_URL;
+  const clientId = import.meta.env.VITE_OAUTH_CLIENT_ID;
+  const scope = import.meta.env.VITE_OAUTH_SCOPE || "openid profile email";
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 
-  const url = new URL(`${oauthPortalUrl}/app-auth`);
-  url.searchParams.set("appId", appId);
-  url.searchParams.set("redirectUri", redirectUri);
+  const url = new URL(authorizeUrl);
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", scope);
   url.searchParams.set("state", state);
-  url.searchParams.set("type", "signIn");
 
   return url.toString();
 };

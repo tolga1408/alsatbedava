@@ -1,13 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { processSavedSearchNotifications } from '../savedSearchNotifications';
 
-// Mock the database and notification modules
+// Mock the database module
 vi.mock('../../db', () => ({
   getDb: vi.fn(),
-}));
-
-vi.mock('../../_core/notification', () => ({
-  notifyOwner: vi.fn(),
 }));
 
 describe('savedSearchNotifications', () => {
