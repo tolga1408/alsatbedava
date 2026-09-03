@@ -12,6 +12,7 @@ import MyListings from "./pages/MyListings";
 import Messages from "./pages/Messages";
 import SavedSearches from "./pages/SavedSearches";
 import Admin from "./pages/Admin";
+import DemoLogin from "./pages/DemoLogin";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/messages" component={Messages} />
       <Route path="/saved-searches" component={SavedSearches} />
       <Route path="/admin" component={Admin} />
+      <Route path="/demo-login" component={DemoLogin} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

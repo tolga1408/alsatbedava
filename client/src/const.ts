@@ -11,8 +11,12 @@ const getDemoLoginUrl = () => {
     typeof window === "undefined"
       ? "/"
       : `${window.location.pathname}${window.location.search}`;
+  const loginPath =
+    import.meta.env.VITE_STATIC_DEMO === "true"
+      ? "/demo-login"
+      : "/api/demo-login";
 
-  return `/api/demo-login?redirect=${encodeURIComponent(redirect)}`;
+  return `${loginPath}?redirect=${encodeURIComponent(redirect)}`;
 };
 
 // Generate login URL at runtime so redirect URI reflects the current origin.
