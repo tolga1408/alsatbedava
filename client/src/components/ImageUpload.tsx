@@ -10,74 +10,86 @@ interface ImageUploadProps {
   maxImages?: number;
 }
 
-export function ImageUpload({ value = [], onChange, maxImages = 10 }: ImageUploadProps) {
+export function ImageUpload({
+  value = [],
+  onChange,
+  maxImages = 10,
+}: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const uploadMutation = trpc.upload.image.useMutation();
 
-  const handleFileSelect = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const handleFileSelect = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
 
-    const remaining = maxImages - value.length;
-    if (remaining <= 0) {
-      toast.error(`Maksimum ${maxImages} fotoğraf yükleyebilirsiniz`);
-      return;
-    }
+      const remaining = maxImages - value.length;
+      if (remaining <= 0) {
+        toast.error(`Maksimum ${maxImages} fotoğraf yükleyebilirsiniz`);
+        return;
+      }
 
-    const filesToUpload = Array.from(files).slice(0, remaining);
-    setUploading(true);
+      const filesToUpload = Array.from(files).slice(0, remaining);
+      setUploading(true);
 
-    try {
-      const uploadPromises = filesToUpload.map(async (file) => {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          throw new Error(`${file.name} bir resim dosyası değil`);
-        }
+      try {
+        const uploadPromises = filesToUpload.map(async file => {
+          // Validate file type
+          if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            throw new Error(
+              `${file.name} JPG, PNG veya WebP formatında olmalı`
+            );
+          }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`${file.name} çok büyük (max 5MB)`);
-        }
+          // Validate file size (max 5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            throw new Error(`${file.name} çok büyük (max 5MB)`);
+          }
 
-        // Convert to base64
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = async () => {
-            try {
-              const base64 = reader.result as string;
-              const result = await uploadMutation.mutateAsync({
-                base64,
-                filename: file.name,
-                mimeType: file.type,
-              });
-              resolve(result.url);
-            } catch (error) {
-              reject(error);
-            }
-          };
-          reader.onerror = () => reject(new Error(`${file.name} okunamadı`));
-          reader.readAsDataURL(file);
+          // Convert to base64
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async () => {
+              try {
+                const base64 = reader.result as string;
+                const result = await uploadMutation.mutateAsync({
+                  base64,
+                  filename: file.name,
+                  mimeType: file.type,
+                });
+                resolve(result.url);
+              } catch (error) {
+                reject(error);
+              }
+            };
+            reader.onerror = () => reject(new Error(`${file.name} okunamadı`));
+            reader.readAsDataURL(file);
+          });
         });
-      });
 
-      const urls = await Promise.all(uploadPromises);
-      onChange([...value, ...urls]);
-      toast.success(`${urls.length} fotoğraf yüklendi`);
-    } catch (error: any) {
-      toast.error(error.message || "Fotoğraf yüklenirken hata oluştu");
-    } finally {
-      setUploading(false);
-    }
-  }, [value, onChange, maxImages, uploadMutation]);
+        const urls = await Promise.all(uploadPromises);
+        onChange([...value, ...urls]);
+        toast.success(`${urls.length} fotoğraf yüklendi`);
+      } catch (error: any) {
+        toast.error(error.message || "Fotoğraf yüklenirken hata oluştu");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [value, onChange, maxImages, uploadMutation]
+  );
 
   const handleRemove = (index: number) => {
     const newValue = value.filter((_, i) => i !== index);
     onChange(newValue);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    handleFileSelect(e.dataTransfer.files);
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      handleFileSelect(e.dataTransfer.files);
+    },
+    [handleFileSelect]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -90,7 +102,7 @@ export function ImageUpload({ value = [], onChange, maxImages = 10 }: ImageUploa
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
-        onClick={() => document.getElementById('file-input')?.click()}
+        onClick={() => document.getElementById("file-input")?.click()}
       >
         <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-600 mb-2">
@@ -102,10 +114,10 @@ export function ImageUpload({ value = [], onChange, maxImages = 10 }: ImageUploa
         <input
           id="file-input"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           className="hidden"
-          onChange={(e) => handleFileSelect(e.target.files)}
+          onChange={e => handleFileSelect(e.target.files)}
           disabled={uploading}
         />
       </div>
@@ -140,9 +152,7 @@ export function ImageUpload({ value = [], onChange, maxImages = 10 }: ImageUploa
       )}
 
       {uploading && (
-        <div className="text-center text-sm text-gray-600">
-          Yükleniyor...
-        </div>
+        <div className="text-center text-sm text-gray-600">Yükleniyor...</div>
       )}
     </div>
   );

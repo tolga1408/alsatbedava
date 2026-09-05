@@ -25,7 +25,6 @@ import {
   Search,
   Eye,
   Heart,
-  Phone,
   MessageCircle,
   SlidersHorizontal,
   X,
@@ -39,47 +38,121 @@ import { APP_LOGO, APP_TITLE } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { MapView } from "@/components/MapView";
+import {
+  getCategoryById,
+  getCategoryIdFromParam,
+  getCategoryName,
+  LISTING_CATEGORIES,
+} from "@/lib/categoryOptions";
+import { getListingImages } from "@/lib/listingImages";
+
+type CategoryFilter = number | "all";
+
+type BrowseFilters = {
+  search: string;
+  city: string;
+  district: string;
+  minPrice: string;
+  maxPrice: string;
+  categoryId: CategoryFilter;
+};
+
+const getInitialFilters = (): BrowseFilters => {
+  if (typeof window === "undefined") {
+    return {
+      search: "",
+      city: "all",
+      district: "all",
+      minPrice: "",
+      maxPrice: "",
+      categoryId: "all",
+    };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    search: params.get("search") ?? "",
+    city: params.get("city") ?? "all",
+    district: params.get("district") ?? "all",
+    minPrice: params.get("minPrice") ?? "",
+    maxPrice: params.get("maxPrice") ?? "",
+    categoryId: getCategoryIdFromParam(
+      params.get("category") ?? params.get("categoryId")
+    ),
+  };
+};
+
+const emptyFilters = (): BrowseFilters => ({
+  search: "",
+  city: "all",
+  district: "all",
+  minPrice: "",
+  maxPrice: "",
+  categoryId: "all",
+});
 
 export default function Browse() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const utils = trpc.useUtils();
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useLocalStorage<"list" | "map" | "split">("alsatbedava_viewMode", "list");
-  const [autoUpdate, setAutoUpdate] = useLocalStorage("alsatbedava_autoUpdate", true);
-  const [mapBounds, setMapBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
-  const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
-  const [splitRatio, setSplitRatio] = useLocalStorage("alsatbedava_splitRatio", 50); // 50% = equal split
+  const [viewMode, setViewMode] = useLocalStorage<"list" | "map" | "split">(
+    "alsatbedava_viewMode",
+    "list"
+  );
+  const [autoUpdate, setAutoUpdate] = useLocalStorage(
+    "alsatbedava_autoUpdate",
+    true
+  );
+  const [mapBounds, setMapBounds] = useState<{
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null>(null);
+  const [highlightedListingId, setHighlightedListingId] = useState<
+    number | null
+  >(null);
+  const [splitRatio, setSplitRatio] = useLocalStorage(
+    "alsatbedava_splitRatio",
+    50
+  ); // 50% = equal split
   const [isDragging, setIsDragging] = useState(false);
   const [showSaveSearchDialog, setShowSaveSearchDialog] = useState(false);
   const [saveSearchName, setSaveSearchName] = useState("");
   const boundsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const listingRefs = useRef<Record<number, HTMLDivElement>>({});
   const splitContainerRef = useRef<HTMLDivElement>(null);
-  const [filters, setFilters] = useState({
-    search: "",
-    city: "all",
-    district: "all",
-    minPrice: "",
-    maxPrice: "",
-    categoryId: 1, // Emlak
-  });
+  const [filters, setFilters] = useState<BrowseFilters>(getInitialFilters);
+
+  useEffect(() => {
+    setFilters(getInitialFilters());
+  }, [location]);
+
+  const clearFilters = () => {
+    setFilters(emptyFilters());
+    setLocation("/browse", { replace: true });
+  };
 
   // Debounced bounds handler
-  const handleBoundsChange = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
-    if (!autoUpdate) return;
-    
-    // Clear existing timeout
-    if (boundsTimeoutRef.current) {
-      clearTimeout(boundsTimeoutRef.current);
-    }
-    
-    // Set new timeout for debouncing
-    boundsTimeoutRef.current = setTimeout(() => {
-      setMapBounds(bounds);
-    }, 500); // 500ms debounce
-  }, [autoUpdate]);
-  
+  const handleBoundsChange = useCallback(
+    (bounds: { north: number; south: number; east: number; west: number }) => {
+      if (!autoUpdate) return;
+
+      // Clear existing timeout
+      if (boundsTimeoutRef.current) {
+        clearTimeout(boundsTimeoutRef.current);
+      }
+
+      // Set new timeout for debouncing
+      boundsTimeoutRef.current = setTimeout(() => {
+        setMapBounds(bounds);
+      }, 500); // 500ms debounce
+    },
+    [autoUpdate]
+  );
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -88,35 +161,39 @@ export default function Browse() {
       }
     };
   }, []);
-  
+
   // Handle marker click - highlight and scroll to listing
   const handleMarkerClick = useCallback((listingId: number) => {
     setHighlightedListingId(listingId);
-    
+
     // Scroll to the listing card
     const listingElement = listingRefs.current[listingId];
     if (listingElement) {
-      listingElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      listingElement.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-    
+
     // Clear highlight after 3 seconds
     setTimeout(() => {
       setHighlightedListingId(null);
     }, 3000);
   }, []);
-  
+
   // Clear highlight when filters change
   useEffect(() => {
     setHighlightedListingId(null);
   }, [filters, viewMode]);
 
   const { data: listings, isLoading } = trpc.listings.search.useQuery({
+    search: filters.search.trim() || undefined,
     city: filters.city === "all" ? undefined : filters.city,
     district: filters.district === "all" ? undefined : filters.district,
     minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
-    categoryId: filters.categoryId,
-    bounds: (viewMode === "map" || viewMode === "split") && autoUpdate && mapBounds ? mapBounds : undefined,
+    categoryId: filters.categoryId === "all" ? undefined : filters.categoryId,
+    bounds:
+      (viewMode === "map" || viewMode === "split") && autoUpdate && mapBounds
+        ? mapBounds
+        : undefined,
   });
 
   const saveSearchMutation = trpc.savedSearches.create.useMutation({
@@ -130,6 +207,14 @@ export default function Browse() {
     },
   });
 
+  const favoriteMutation = trpc.favorites.add.useMutation({
+    onSuccess: () => {
+      toast.success("Favorilere eklendi");
+      utils.favorites.list.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+
   const handleSaveSearch = () => {
     if (!saveSearchName.trim()) {
       toast.error("Lütfen arama için bir isim girin");
@@ -139,10 +224,12 @@ export default function Browse() {
     saveSearchMutation.mutate({
       name: saveSearchName,
       filters: {
+        search: filters.search.trim() || undefined,
         city: filters.city === "all" ? undefined : filters.city,
         minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
         maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
-        categoryId: filters.categoryId,
+        categoryId:
+          filters.categoryId === "all" ? undefined : filters.categoryId,
       },
       emailNotifications: true,
     });
@@ -173,22 +260,22 @@ export default function Browse() {
   // Add/remove mouse event listeners for dragging
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
     } else {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
   }, [isDragging]);
 
@@ -212,13 +299,57 @@ export default function Browse() {
 
   // District mapping by city
   const districtsByCity: Record<string, string[]> = {
-    "İstanbul": ["Kadıköy", "Beşiktaş", "Şişli", "Sarıyer", "Üsküdar", "Bakırköy", "Kartal", "Maltepe", "Pendik", "Avcılar"],
-    "Ankara": ["Çankaya", "Keçiören", "Etimesgut", "Yenimahalle", "Mamak", "Altındağ", "Sincan", "Pursaklar"],
-    "İzmir": ["Konak", "Karşıyaka", "Bornova", "Urla", "Çeşme", "Buca", "Gaziemir", "Balçova"],
+    İstanbul: [
+      "Kadıköy",
+      "Beşiktaş",
+      "Şişli",
+      "Sarıyer",
+      "Üsküdar",
+      "Bakırköy",
+      "Kartal",
+      "Maltepe",
+      "Pendik",
+      "Avcılar",
+    ],
+    Ankara: [
+      "Çankaya",
+      "Keçiören",
+      "Etimesgut",
+      "Yenimahalle",
+      "Mamak",
+      "Altındağ",
+      "Sincan",
+      "Pursaklar",
+    ],
+    İzmir: [
+      "Konak",
+      "Karşıyaka",
+      "Bornova",
+      "Urla",
+      "Çeşme",
+      "Buca",
+      "Gaziemir",
+      "Balçova",
+    ],
   };
 
   // Get districts for selected city
-  const availableDistricts = filters.city && filters.city !== "all" ? districtsByCity[filters.city] || [] : [];
+  const availableDistricts =
+    filters.city && filters.city !== "all"
+      ? districtsByCity[filters.city] || []
+      : [];
+  const selectedCategory =
+    filters.categoryId === "all" ? null : getCategoryById(filters.categoryId);
+  const hasActiveFilters =
+    Boolean(filters.search.trim()) ||
+    filters.city !== "all" ||
+    filters.district !== "all" ||
+    Boolean(filters.minPrice) ||
+    Boolean(filters.maxPrice) ||
+    filters.categoryId !== "all";
+  const pageTitle = selectedCategory
+    ? `${selectedCategory.name} İlanları`
+    : "Tüm İlanlar";
 
   // Reset district when city changes
   useEffect(() => {
@@ -239,7 +370,9 @@ export default function Browse() {
               {APP_LOGO && (
                 <img src={APP_LOGO} alt={APP_TITLE} className="h-8 w-8" />
               )}
-              <span className="text-xl font-bold text-primary">{APP_TITLE}</span>
+              <span className="text-xl font-bold text-primary">
+                {APP_TITLE}
+              </span>
             </div>
           </Link>
 
@@ -281,20 +414,7 @@ export default function Browse() {
               <CardContent className="p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="font-semibold text-lg">Filtreler</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setFilters({
-                        search: "",
-                        city: "all",
-                        district: "all",
-                        minPrice: "",
-                        maxPrice: "",
-                        categoryId: 1,
-                      })
-                    }
-                  >
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
                     Temizle
                   </Button>
                 </div>
@@ -309,11 +429,40 @@ export default function Browse() {
                       placeholder="Anahtar kelime..."
                       className="pl-10"
                       value={filters.search}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFilters({ ...filters, search: e.target.value })
                       }
                     />
                   </div>
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2">
+                  <Label htmlFor="category">Kategori</Label>
+                  <Select
+                    value={filters.categoryId.toString()}
+                    onValueChange={value =>
+                      setFilters({
+                        ...filters,
+                        categoryId: getCategoryIdFromParam(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tüm kategoriler" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tüm kategoriler</SelectItem>
+                      {LISTING_CATEGORIES.map(category => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* City */}
@@ -321,7 +470,7 @@ export default function Browse() {
                   <Label htmlFor="city">Şehir</Label>
                   <Select
                     value={filters.city}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setFilters({ ...filters, city: value })
                     }
                   >
@@ -330,7 +479,7 @@ export default function Browse() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tüm şehirler</SelectItem>
-                      {turkishCities.map((city) => (
+                      {turkishCities.map(city => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>
@@ -345,7 +494,7 @@ export default function Browse() {
                     <Label htmlFor="district">İlçe</Label>
                     <Select
                       value={filters.district}
-                      onValueChange={(value) =>
+                      onValueChange={value =>
                         setFilters({ ...filters, district: value })
                       }
                     >
@@ -354,7 +503,7 @@ export default function Browse() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Tüm ilçeler</SelectItem>
-                        {availableDistricts.map((district) => (
+                        {availableDistricts.map(district => (
                           <SelectItem key={district} value={district}>
                             {district}
                           </SelectItem>
@@ -372,7 +521,7 @@ export default function Browse() {
                       type="number"
                       placeholder="Min"
                       value={filters.minPrice}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFilters({ ...filters, minPrice: e.target.value })
                       }
                     />
@@ -380,7 +529,7 @@ export default function Browse() {
                       type="number"
                       placeholder="Max"
                       value={filters.maxPrice}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFilters({ ...filters, maxPrice: e.target.value })
                       }
                     />
@@ -395,7 +544,11 @@ export default function Browse() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setFilters({ ...filters, minPrice: "", maxPrice: "500000" })
+                        setFilters({
+                          ...filters,
+                          minPrice: "",
+                          maxPrice: "500000",
+                        })
                       }
                     >
                       500K'ya kadar
@@ -430,7 +583,11 @@ export default function Browse() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setFilters({ ...filters, minPrice: "2000000", maxPrice: "" })
+                        setFilters({
+                          ...filters,
+                          minPrice: "2000000",
+                          maxPrice: "",
+                        })
                       }
                     >
                       2M+
@@ -465,7 +622,7 @@ export default function Browse() {
                       placeholder="Anahtar kelime..."
                       className="pl-10"
                       value={filters.search}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFilters({ ...filters, search: e.target.value })
                       }
                     />
@@ -473,10 +630,38 @@ export default function Browse() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="category-mobile">Kategori</Label>
+                  <Select
+                    value={filters.categoryId.toString()}
+                    onValueChange={value =>
+                      setFilters({
+                        ...filters,
+                        categoryId: getCategoryIdFromParam(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tüm kategoriler" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tüm kategoriler</SelectItem>
+                      {LISTING_CATEGORIES.map(category => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="city-mobile">Şehir</Label>
                   <Select
                     value={filters.city}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setFilters({ ...filters, city: value })
                     }
                   >
@@ -485,7 +670,7 @@ export default function Browse() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tüm şehirler</SelectItem>
-                      {turkishCities.map((city) => (
+                      {turkishCities.map(city => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>
@@ -500,7 +685,7 @@ export default function Browse() {
                     <Label htmlFor="district-mobile">İlçe</Label>
                     <Select
                       value={filters.district}
-                      onValueChange={(value) =>
+                      onValueChange={value =>
                         setFilters({ ...filters, district: value })
                       }
                     >
@@ -509,7 +694,7 @@ export default function Browse() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Tüm ilçeler</SelectItem>
-                        {availableDistricts.map((district) => (
+                        {availableDistricts.map(district => (
                           <SelectItem key={district} value={district}>
                             {district}
                           </SelectItem>
@@ -526,7 +711,7 @@ export default function Browse() {
                       type="number"
                       placeholder="Min"
                       value={filters.minPrice}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFilters({ ...filters, minPrice: e.target.value })
                       }
                     />
@@ -534,7 +719,7 @@ export default function Browse() {
                       type="number"
                       placeholder="Max"
                       value={filters.maxPrice}
-                      onChange={(e) =>
+                      onChange={e =>
                         setFilters({ ...filters, maxPrice: e.target.value })
                       }
                     />
@@ -545,16 +730,7 @@ export default function Browse() {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() =>
-                    setFilters({
-                      search: "",
-                      city: "all",
-                      district: "all",
-                      minPrice: "",
-                      maxPrice: "",
-                      categoryId: 1,
-                    })
-                  }
+                  onClick={clearFilters}
                 >
                   Temizle
                 </Button>
@@ -572,7 +748,7 @@ export default function Browse() {
           <div className="lg:col-span-3">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold mb-1">Emlak İlanları</h1>
+                <h1 className="text-2xl font-bold mb-1">{pageTitle}</h1>
                 <p className="text-muted-foreground">
                   {isLoading
                     ? "Yükleniyor..."
@@ -580,13 +756,24 @@ export default function Browse() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                {filters.city && (
+                {filters.search.trim() && (
+                  <Badge variant="secondary" className="text-sm">
+                    <Search className="w-3 h-3 mr-1" />
+                    {filters.search.trim()}
+                  </Badge>
+                )}
+                {selectedCategory && (
+                  <Badge variant="secondary" className="text-sm">
+                    {selectedCategory.name}
+                  </Badge>
+                )}
+                {filters.city !== "all" && (
                   <Badge variant="secondary" className="text-sm">
                     <MapPin className="w-3 h-3 mr-1" />
                     {filters.city}
                   </Badge>
                 )}
-                {user && (filters.city !== "all" || filters.minPrice || filters.maxPrice || filters.search) && (
+                {user && hasActiveFilters && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -622,8 +809,18 @@ export default function Browse() {
                     onClick={() => setViewMode("split")}
                     className="rounded-none"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 4H5a2 2 0 00-2 2v14a2 2 0 002 2h4m0-18v18m0-18h10a2 2 0 012 2v14a2 2 0 01-2 2h-10" />
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 4H5a2 2 0 00-2 2v14a2 2 0 002 2h4m0-18v18m0-18h10a2 2 0 012 2v14a2 2 0 01-2 2h-10"
+                      />
                     </svg>
                     Bölünmüş
                   </Button>
@@ -641,10 +838,13 @@ export default function Browse() {
                       type="checkbox"
                       id="auto-update-split"
                       checked={autoUpdate}
-                      onChange={(e) => setAutoUpdate(e.target.checked)}
+                      onChange={e => setAutoUpdate(e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300"
                     />
-                    <label htmlFor="auto-update-split" className="text-sm font-medium cursor-pointer">
+                    <label
+                      htmlFor="auto-update-split"
+                      className="text-sm font-medium cursor-pointer"
+                    >
                       Haritayı hareket ettirdiğimde ilanları güncelle
                     </label>
                   </div>
@@ -662,26 +862,28 @@ export default function Browse() {
                     </Button>
                   )}
                 </div>
-                
+
                 {/* Split layout: Map on left, List on right */}
-                <div 
+                <div
                   ref={splitContainerRef}
                   className="flex flex-col lg:flex-row h-[calc(100vh-320px)] min-h-[500px] relative"
                 >
                   {/* Map Panel */}
-                  <div 
+                  <div
                     className="w-full h-full"
-                    style={{ 
-                      width: viewMode === 'split' ? `${splitRatio}%` : '100%',
-                      minWidth: viewMode === 'split' ? '30%' : undefined,
-                      maxWidth: viewMode === 'split' ? '70%' : undefined
+                    style={{
+                      width: viewMode === "split" ? `${splitRatio}%` : "100%",
+                      minWidth: viewMode === "split" ? "30%" : undefined,
+                      maxWidth: viewMode === "split" ? "70%" : undefined,
                     }}
                   >
                     {isLoading ? (
                       <Card className="h-full flex items-center justify-center">
                         <div className="text-center">
                           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                          <p className="text-muted-foreground">Harita yükleniyor...</p>
+                          <p className="text-muted-foreground">
+                            Harita yükleniyor...
+                          </p>
                         </div>
                       </Card>
                     ) : (
@@ -692,33 +894,44 @@ export default function Browse() {
                       />
                     )}
                   </div>
-                  
+
                   {/* Draggable Divider */}
-                  <div 
+                  <div
                     className="hidden lg:block w-1 bg-border hover:bg-primary/50 cursor-col-resize transition-colors relative group"
                     onMouseDown={handleMouseDown}
-                    style={{ cursor: isDragging ? 'col-resize' : undefined }}
+                    style={{ cursor: isDragging ? "col-resize" : undefined }}
                   >
                     <div className="absolute inset-y-0 -left-1 -right-1" />
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-12 bg-background border border-border rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                      <svg
+                        className="w-4 h-4 text-muted-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+                        />
                       </svg>
                     </div>
                   </div>
-                  
+
                   {/* List Panel */}
-                  <div 
+                  <div
                     className="w-full h-full overflow-y-auto"
-                    style={{ 
-                      width: viewMode === 'split' ? `${100 - splitRatio}%` : '100%',
-                      minWidth: viewMode === 'split' ? '30%' : undefined,
-                      maxWidth: viewMode === 'split' ? '70%' : undefined
+                    style={{
+                      width:
+                        viewMode === "split" ? `${100 - splitRatio}%` : "100%",
+                      minWidth: viewMode === "split" ? "30%" : undefined,
+                      maxWidth: viewMode === "split" ? "70%" : undefined,
                     }}
                   >
                     {isLoading ? (
                       <div className="grid grid-cols-1 gap-4">
-                        {[1, 2, 3].map((i) => (
+                        {[1, 2, 3].map(i => (
                           <Card key={i} className="animate-pulse">
                             <div className="aspect-video bg-muted" />
                             <CardContent className="p-4 space-y-3">
@@ -731,23 +944,21 @@ export default function Browse() {
                       </div>
                     ) : listings && listings.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4">
-                        {listings.map((listing) => {
-                          const images = listing.images ? JSON.parse(listing.images) : [];
-                          const randomViews = Math.floor(Math.random() * 500) + 50;
-                          const randomPhone = `0${Math.floor(Math.random() * 9) + 5}${Math.floor(Math.random() * 90000000) + 10000000}`;
+                        {listings.map(listing => {
+                          const images = getListingImages(listing.images);
 
                           return (
                             <Card
                               key={listing.id}
-                              ref={(el) => {
+                              ref={el => {
                                 if (el) {
                                   listingRefs.current[listing.id] = el;
                                 }
                               }}
                               className={`hover:shadow-xl transition-all cursor-pointer group ${
                                 highlightedListingId === listing.id
-                                  ? 'ring-4 ring-primary ring-offset-2 shadow-2xl scale-105'
-                                  : ''
+                                  ? "ring-4 ring-primary ring-offset-2 shadow-2xl scale-105"
+                                  : ""
                               }`}
                             >
                               <Link href={`/listing/${listing.id}`}>
@@ -765,13 +976,16 @@ export default function Browse() {
                                   )}
                                   <div className="absolute top-2 right-2 flex gap-2">
                                     <Badge className="bg-primary/90 backdrop-blur">
-                                      Emlak
+                                      {getCategoryName(listing.categoryId)}
                                     </Badge>
                                   </div>
                                   <div className="absolute bottom-2 left-2">
-                                    <Badge variant="secondary" className="bg-white/90 backdrop-blur">
+                                    <Badge
+                                      variant="secondary"
+                                      className="bg-white/90 backdrop-blur"
+                                    >
                                       <Eye className="w-3 h-3 mr-1" />
-                                      {randomViews}
+                                      {listing.viewCount}
                                     </Badge>
                                   </div>
                                 </div>
@@ -786,7 +1000,8 @@ export default function Browse() {
                                   <MapPin className="w-4 h-4 flex-shrink-0" />
                                   <span className="truncate">
                                     {listing.city}
-                                    {listing.district && `, ${listing.district}`}
+                                    {listing.district &&
+                                      `, ${listing.district}`}
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-between pt-2 border-t">
@@ -800,23 +1015,33 @@ export default function Browse() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-9 w-9"
-                                      onClick={(e) => {
+                                      onClick={e => {
                                         e.preventDefault();
-                                        window.open(`tel:${randomPhone}`);
+                                        if (!user) {
+                                          toast.error(
+                                            "Favorilere eklemek için giriş yapın"
+                                          );
+                                          return;
+                                        }
+                                        favoriteMutation.mutate({
+                                          listingId: listing.id,
+                                        });
                                       }}
+                                      aria-label="Favorilere ekle"
                                     >
-                                      <Phone className="h-4 w-4" />
+                                      <Heart className="h-4 w-4" />
                                     </Button>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-9 w-9 text-green-600"
-                                      onClick={(e) => {
+                                      className="h-9 w-9"
+                                      onClick={e => {
                                         e.preventDefault();
-                                        window.open(`https://wa.me/${randomPhone.replace(/^0/, '90')}`);
+                                        setLocation(`/listing/${listing.id}`);
                                       }}
+                                      aria-label="İlanı incele"
                                     >
-                                      <MessageCircle className="h-4 w-4" />
+                                      <Eye className="h-4 w-4" />
                                     </Button>
                                   </div>
                                 </div>
@@ -829,8 +1054,13 @@ export default function Browse() {
                       <Card className="h-full flex items-center justify-center">
                         <CardContent className="text-center py-12">
                           <Home className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">İlan bulunamadı</h3>
-                          <p className="text-muted-foreground">Aradığınız kriterlere uygun ilan bulunamadı</p>
+                          <h3 className="text-lg font-semibold mb-2">
+                            İlan bulunamadı
+                          </h3>
+                          <p className="text-muted-foreground">
+                            Bu arama için ilan bulunamadı. Farklı bir kelime
+                            veya kategori deneyebilirsiniz.
+                          </p>
                         </CardContent>
                       </Card>
                     )}
@@ -846,10 +1076,13 @@ export default function Browse() {
                       type="checkbox"
                       id="auto-update"
                       checked={autoUpdate}
-                      onChange={(e) => setAutoUpdate(e.target.checked)}
+                      onChange={e => setAutoUpdate(e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300"
                     />
-                    <label htmlFor="auto-update" className="text-sm font-medium cursor-pointer">
+                    <label
+                      htmlFor="auto-update"
+                      className="text-sm font-medium cursor-pointer"
+                    >
                       Haritayı hareket ettirdiğimde ilanları güncelle
                     </label>
                   </div>
@@ -868,25 +1101,27 @@ export default function Browse() {
                   )}
                 </div>
                 <div className="h-[calc(100vh-320px)] min-h-[500px]">
-                {isLoading ? (
-                  <Card className="h-full flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Harita yükleniyor...</p>
-                    </div>
-                  </Card>
-                ) : (
-                  <MapView
-                    listings={listings || []}
-                    onListingClick={handleMarkerClick}
-                    onBoundsChange={handleBoundsChange}
-                  />
-                )}
+                  {isLoading ? (
+                    <Card className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">
+                          Harita yükleniyor...
+                        </p>
+                      </div>
+                    </Card>
+                  ) : (
+                    <MapView
+                      listings={listings || []}
+                      onListingClick={handleMarkerClick}
+                      onBoundsChange={handleBoundsChange}
+                    />
+                  )}
                 </div>
               </div>
             ) : /* List View */ isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+                {[1, 2, 3, 4, 5, 6].map(i => (
                   <Card key={i} className="animate-pulse">
                     <div className="aspect-video bg-muted" />
                     <CardContent className="p-4 space-y-3">
@@ -899,23 +1134,21 @@ export default function Browse() {
               </div>
             ) : listings && listings.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {listings.map((listing) => {
-                  const images = listing.images ? JSON.parse(listing.images) : [];
-                  const randomViews = Math.floor(Math.random() * 500) + 50;
-                  const randomPhone = `0${Math.floor(Math.random() * 9) + 5}${Math.floor(Math.random() * 90000000) + 10000000}`;
+                {listings.map(listing => {
+                  const images = getListingImages(listing.images);
 
                   return (
                     <Card
                       key={listing.id}
-                      ref={(el) => {
+                      ref={el => {
                         if (el) {
                           listingRefs.current[listing.id] = el;
                         }
                       }}
                       className={`hover:shadow-xl transition-all cursor-pointer group ${
                         highlightedListingId === listing.id
-                          ? 'ring-4 ring-primary ring-offset-2 shadow-2xl scale-105'
-                          : ''
+                          ? "ring-4 ring-primary ring-offset-2 shadow-2xl scale-105"
+                          : ""
                       }`}
                     >
                       <Link href={`/listing/${listing.id}`}>
@@ -933,13 +1166,16 @@ export default function Browse() {
                           )}
                           <div className="absolute top-2 right-2 flex gap-2">
                             <Badge className="bg-primary/90 backdrop-blur">
-                              Emlak
+                              {getCategoryName(listing.categoryId)}
                             </Badge>
                           </div>
                           <div className="absolute bottom-2 left-2">
-                            <Badge variant="secondary" className="bg-white/90 backdrop-blur">
+                            <Badge
+                              variant="secondary"
+                              className="bg-white/90 backdrop-blur"
+                            >
                               <Eye className="w-3 h-3 mr-1" />
-                              {randomViews}
+                              {listing.viewCount}
                             </Badge>
                           </div>
                         </div>
@@ -968,10 +1204,19 @@ export default function Browse() {
                               variant="ghost"
                               size="sm"
                               className="h-9 w-9 p-0"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.preventDefault();
-                                // TODO: Add to favorites
+                                if (!user) {
+                                  toast.error(
+                                    "Favorilere eklemek için giriş yapın"
+                                  );
+                                  return;
+                                }
+                                favoriteMutation.mutate({
+                                  listingId: listing.id,
+                                });
                               }}
+                              aria-label="Favorilere ekle"
                             >
                               <Heart className="w-4 h-4" />
                             </Button>
@@ -982,19 +1227,19 @@ export default function Browse() {
                             variant="outline"
                             size="sm"
                             className="flex-1"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.preventDefault();
-                              window.location.href = `tel:${randomPhone}`;
+                              setLocation(`/listing/${listing.id}`);
                             }}
                           >
-                            <Phone className="w-4 h-4 mr-1" />
-                            Ara
+                            <Eye className="w-4 h-4 mr-1" />
+                            İncele
                           </Button>
                           <Button
                             variant="default"
                             size="sm"
                             className="flex-1"
-                            onClick={(e) => {
+                            onClick={e => {
                               e.preventDefault();
                               setLocation(`/listing/${listing.id}`);
                             }}
@@ -1016,22 +1261,10 @@ export default function Browse() {
                     İlan bulunamadı
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Aradığınız kriterlere uygun ilan bulunamadı
+                    Bu arama için ilan bulunamadı. Farklı bir kelime veya
+                    kategori deneyebilirsiniz.
                   </p>
-                  <Button
-                    onClick={() =>
-                      setFilters({
-                        search: "",
-                        city: "all",
-                        district: "all",
-                        minPrice: "",
-                        maxPrice: "",
-                        categoryId: 1,
-                      })
-                    }
-                  >
-                    Filtreleri Temizle
-                  </Button>
+                  <Button onClick={clearFilters}>Filtreleri Temizle</Button>
                 </CardContent>
               </Card>
             )}
@@ -1040,12 +1273,16 @@ export default function Browse() {
       </div>
 
       {/* Save Search Dialog */}
-      <Dialog open={showSaveSearchDialog} onOpenChange={setShowSaveSearchDialog}>
+      <Dialog
+        open={showSaveSearchDialog}
+        onOpenChange={setShowSaveSearchDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Aramayı Kaydet</DialogTitle>
             <DialogDescription>
-              Bu arama kriterlerinizi kaydedin ve yeni ilanlardan e-posta ile haberdar olun.
+              Bu arama kriterlerinizi kaydedin ve yeni ilanlardan e-posta ile
+              haberdar olun.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1055,8 +1292,8 @@ export default function Browse() {
                 id="search-name"
                 placeholder="Örn: İstanbul'da 2-4M TL arası daireler"
                 value={saveSearchName}
-                onChange={(e) => setSaveSearchName(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={e => setSaveSearchName(e.target.value)}
+                onKeyDown={e => {
                   if (e.key === "Enter") {
                     handleSaveSearch();
                   }
@@ -1066,18 +1303,35 @@ export default function Browse() {
             <div className="text-sm text-muted-foreground">
               <p className="font-medium mb-1">Kaydedilecek filtreler:</p>
               <ul className="list-disc list-inside space-y-1">
+                {filters.search.trim() && (
+                  <li>Arama: {filters.search.trim()}</li>
+                )}
+                {selectedCategory && <li>Kategori: {selectedCategory.name}</li>}
                 {filters.city !== "all" && <li>Şehir: {filters.city}</li>}
-                {filters.district !== "all" && <li>İlçe: {filters.district}</li>}
-                {filters.minPrice && <li>Min Fiyat: {parseFloat(filters.minPrice).toLocaleString()} ₺</li>}
-                {filters.maxPrice && <li>Max Fiyat: {parseFloat(filters.maxPrice).toLocaleString()} ₺</li>}
-                {filters.city === "all" && filters.district === "all" && !filters.minPrice && !filters.maxPrice && (
+                {filters.district !== "all" && (
+                  <li>İlçe: {filters.district}</li>
+                )}
+                {filters.minPrice && (
+                  <li>
+                    Min Fiyat: {parseFloat(filters.minPrice).toLocaleString()} ₺
+                  </li>
+                )}
+                {filters.maxPrice && (
+                  <li>
+                    Max Fiyat: {parseFloat(filters.maxPrice).toLocaleString()} ₺
+                  </li>
+                )}
+                {!hasActiveFilters && (
                   <li className="text-muted-foreground">Tüm ilanlar</li>
                 )}
               </ul>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveSearchDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowSaveSearchDialog(false)}
+            >
               İptal
             </Button>
             <Button

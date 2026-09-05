@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "build:sites": "ALSAT_DISABLE_PUBLIC_DIR=true ALSAT_EMPTY_OUT_DIR=false ALSAT_VITE_OUT_DIR=dist/client VITE_STATIC_DEMO=true vite build && esbuild server/sites-worker.ts --platform=browser --target=es2022 --format=esm --bundle --outfile=dist/server/index.js",
+    "build:sites": "ALSAT_DISABLE_PUBLIC_DIR=true ALSAT_VITE_OUT_DIR=dist/client VITE_SITES_BETA=true vite build && esbuild server/sites-worker.ts --platform=browser --target=es2022 --format=esm --bundle --outfile=dist/server/index.js",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",

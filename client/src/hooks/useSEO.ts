@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { updateMetaTags, setCanonicalUrl, type SEOConfig } from '@/lib/seo';
+import { useEffect } from "react";
+import { updateMetaTags, setCanonicalUrl, type SEOConfig } from "@/lib/seo";
 
 /**
  * React hook for managing SEO meta tags
@@ -8,16 +8,16 @@ import { updateMetaTags, setCanonicalUrl, type SEOConfig } from '@/lib/seo';
 export function useSEO(config: Partial<SEOConfig>) {
   useEffect(() => {
     updateMetaTags(config);
-    
+
     if (config.url) {
       setCanonicalUrl(config.url);
     }
-    
+
     // Cleanup: Reset to default on unmount
     return () => {
       updateMetaTags({
-        title: 'Alsatbedava.com - Türkiye\'nin Adil Pazarı',
-        description: 'Gerçek ilanlar, adil fiyatlar, sıfır komisyon.',
+        title: "Alsatbedava.com - Türkiye'nin Adil Pazarı",
+        description: "Adil fiyatlar, sıfır komisyon.",
       });
     };
   }, [config]);

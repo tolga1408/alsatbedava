@@ -1,10 +1,22 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft } from "lucide-react";
@@ -12,12 +24,21 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
+import { LISTING_CATEGORIES } from "@/lib/categoryOptions";
+
+const detailOptionsByCategory: Record<number, string[]> = {
+  1: ["Daire", "Villa", "Arsa", "İşyeri"],
+  2: ["Otomobil", "Motosiklet", "Ticari Araç"],
+  3: ["Telefon", "Bilgisayar", "Tablet", "Oyun Konsolu"],
+  4: ["Mobilya", "Beyaz Eşya", "Dekorasyon"],
+  5: ["Hobi", "İş Ekipmanı", "Diğer"],
+};
 
 export default function CreateListing() {
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -30,19 +51,27 @@ export default function CreateListing() {
     size: "",
     images: [] as string[],
   });
+  const isPropertyListing = formData.categoryId === 1;
+  const detailOptions =
+    detailOptionsByCategory[formData.categoryId] ?? detailOptionsByCategory[5];
 
   const createMutation = trpc.listings.create.useMutation({
-    onSuccess: (data) => {
+    onSuccess: data => {
       toast.success("İlan başarıyla oluşturuldu!");
       setLocation(`/listing/${data.id}`);
     },
-    onError: (error) => {
+    onError: error => {
       toast.error("İlan oluşturulurken hata oluştu: " + error.message);
     },
   });
 
   const handleSubmit = () => {
-    if (!formData.title || !formData.price || !formData.city) {
+    if (
+      !formData.title ||
+      formData.description.trim().length < 10 ||
+      !formData.price ||
+      !formData.city
+    ) {
       toast.error("Lütfen tüm zorunlu alanları doldurun");
       return;
     }
@@ -101,33 +130,49 @@ export default function CreateListing() {
           <CardHeader>
             <CardTitle className="text-2xl">Yeni İlan Oluştur</CardTitle>
             <CardDescription>
-              Emlak ilanınızı oluşturun - Tamamen ücretsiz!
+              İlanınızı oluşturun - Tamamen ücretsiz!
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
             {/* Progress Steps */}
             <div className="flex items-center justify-between mb-8">
-              <div className={`flex-1 text-center ${step >= 1 ? 'text-primary' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+              <div
+                className={`flex-1 text-center ${step >= 1 ? "text-primary" : "text-gray-400"}`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 1 ? "bg-primary text-white" : "bg-gray-200"}`}
+                >
                   1
                 </div>
                 <p className="text-sm">Temel Bilgiler</p>
               </div>
               <div className="flex-1 h-1 bg-gray-200 mx-2">
-                <div className={`h-full ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
+                <div
+                  className={`h-full ${step >= 2 ? "bg-primary" : "bg-gray-200"}`}
+                />
               </div>
-              <div className={`flex-1 text-center ${step >= 2 ? 'text-primary' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+              <div
+                className={`flex-1 text-center ${step >= 2 ? "text-primary" : "text-gray-400"}`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 2 ? "bg-primary text-white" : "bg-gray-200"}`}
+                >
                   2
                 </div>
                 <p className="text-sm">Detaylar</p>
               </div>
               <div className="flex-1 h-1 bg-gray-200 mx-2">
-                <div className={`h-full ${step >= 3 ? 'bg-primary' : 'bg-gray-200'}`} />
+                <div
+                  className={`h-full ${step >= 3 ? "bg-primary" : "bg-gray-200"}`}
+                />
               </div>
-              <div className={`flex-1 text-center ${step >= 3 ? 'text-primary' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-gray-200'}`}>
+              <div
+                className={`flex-1 text-center ${step >= 3 ? "text-primary" : "text-gray-400"}`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${step >= 3 ? "bg-primary text-white" : "bg-gray-200"}`}
+                >
                   3
                 </div>
                 <p className="text-sm">Fotoğraflar</p>
@@ -138,23 +183,57 @@ export default function CreateListing() {
             {step === 1 && (
               <div className="space-y-4">
                 <div>
+                  <Label htmlFor="category">Kategori *</Label>
+                  <Select
+                    value={formData.categoryId.toString()}
+                    onValueChange={value =>
+                      setFormData({
+                        ...formData,
+                        categoryId: Number(value),
+                        propertyType: "",
+                        rooms: "",
+                        size: "",
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Kategori seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LISTING_CATEGORIES.map(category => (
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
                   <Label htmlFor="title">İlan Başlığı *</Label>
                   <Input
                     id="title"
-                    placeholder="Örn: Kadıköy'de Satılık 3+1 Daire"
+                    placeholder="Örn: Kadıköy'de satılık daire, temiz araba, kutulu telefon"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Açıklama</Label>
+                  <Label htmlFor="description">Açıklama *</Label>
                   <Textarea
                     id="description"
                     placeholder="İlanınız hakkında detaylı bilgi verin..."
                     rows={5}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                   />
                 </div>
 
@@ -165,14 +244,21 @@ export default function CreateListing() {
                     type="number"
                     placeholder="0"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="city">Şehir *</Label>
-                    <Select value={formData.city} onValueChange={(value) => setFormData({ ...formData, city: value })}>
+                    <Select
+                      value={formData.city}
+                      onValueChange={value =>
+                        setFormData({ ...formData, city: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Şehir seçin" />
                       </SelectTrigger>
@@ -192,7 +278,9 @@ export default function CreateListing() {
                       id="district"
                       placeholder="İlçe"
                       value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, district: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -207,52 +295,73 @@ export default function CreateListing() {
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="propertyType">Emlak Tipi</Label>
-                  <Select value={formData.propertyType} onValueChange={(value) => setFormData({ ...formData, propertyType: value })}>
+                  <Label htmlFor="propertyType">
+                    {isPropertyListing ? "Emlak Tipi" : "İlan Tipi"}
+                  </Label>
+                  <Select
+                    value={formData.propertyType}
+                    onValueChange={value =>
+                      setFormData({ ...formData, propertyType: value })
+                    }
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Emlak tipi seçin" />
+                      <SelectValue placeholder="Tip seçin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Daire">Daire</SelectItem>
-                      <SelectItem value="Villa">Villa</SelectItem>
-                      <SelectItem value="Arsa">Arsa</SelectItem>
-                      <SelectItem value="İşyeri">İşyeri</SelectItem>
+                      {detailOptions.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="rooms">Oda Sayısı</Label>
-                    <Select value={formData.rooms} onValueChange={(value) => setFormData({ ...formData, rooms: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Oda sayısı" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1+0</SelectItem>
-                        <SelectItem value="2">1+1</SelectItem>
-                        <SelectItem value="3">2+1</SelectItem>
-                        <SelectItem value="4">3+1</SelectItem>
-                        <SelectItem value="5">4+1</SelectItem>
-                        <SelectItem value="6">5+1</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {isPropertyListing && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="rooms">Oda Sayısı</Label>
+                      <Select
+                        value={formData.rooms}
+                        onValueChange={value =>
+                          setFormData({ ...formData, rooms: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Oda sayısı" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1+0</SelectItem>
+                          <SelectItem value="2">1+1</SelectItem>
+                          <SelectItem value="3">2+1</SelectItem>
+                          <SelectItem value="4">3+1</SelectItem>
+                          <SelectItem value="5">4+1</SelectItem>
+                          <SelectItem value="6">5+1</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div>
-                    <Label htmlFor="size">Metrekare (m²)</Label>
-                    <Input
-                      id="size"
-                      type="number"
-                      placeholder="0"
-                      value={formData.size}
-                      onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                    />
+                    <div>
+                      <Label htmlFor="size">Metrekare (m²)</Label>
+                      <Input
+                        id="size"
+                        type="number"
+                        placeholder="0"
+                        value={formData.size}
+                        onChange={e =>
+                          setFormData({ ...formData, size: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="flex-1"
+                  >
                     Geri
                   </Button>
                   <Button onClick={() => setStep(3)} className="flex-1">
@@ -269,21 +378,29 @@ export default function CreateListing() {
                   <Label>Fotoğraflar (Maksimum 10)</Label>
                   <ImageUpload
                     value={formData.images}
-                    onChange={(urls) => setFormData({ ...formData, images: urls })}
+                    onChange={urls =>
+                      setFormData({ ...formData, images: urls })
+                    }
                     maxImages={10}
                   />
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(2)}
+                    className="flex-1"
+                  >
                     Geri
                   </Button>
-                  <Button 
-                    onClick={handleSubmit} 
+                  <Button
+                    onClick={handleSubmit}
                     className="flex-1"
                     disabled={createMutation.isPending}
                   >
-                    {createMutation.isPending ? "Oluşturuluyor..." : "İlanı Yayınla"}
+                    {createMutation.isPending
+                      ? "Oluşturuluyor..."
+                      : "İlanı Yayınla"}
                   </Button>
                 </div>
               </div>

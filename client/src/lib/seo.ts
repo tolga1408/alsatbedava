@@ -9,22 +9,24 @@ export interface SEOConfig {
   keywords?: string;
   image?: string;
   url?: string;
-  type?: 'website' | 'article' | 'product';
+  type?: "website" | "article" | "product";
   author?: string;
   publishedTime?: string;
   modifiedTime?: string;
   price?: number;
   currency?: string;
-  availability?: 'in stock' | 'out of stock';
+  availability?: "in stock" | "out of stock";
 }
 
 const DEFAULT_SEO: SEOConfig = {
-  title: 'Alsatbedava.com - Türkiye\'nin Adil Pazarı | Al, Sat, Komisyon Ödeme',
-  description: 'Gerçek ilanlar, adil fiyatlar, sıfır komisyon. Sahibinden\'e alternatif. Her ilanı görebilir, komisyon ödemeden alıp satabilirsiniz.',
-  keywords: 'emlak, araç, ikinci el, ilan sitesi, sahibinden alternatif, ücretsiz ilan, gayrimenkul, satılık daire, kiralık ev',
-  image: 'https://alsatbedava.com/og-image.jpg',
-  url: 'https://alsatbedava.com',
-  type: 'website',
+  title: "Alsatbedava.com - Türkiye'nin Adil Pazarı | Al, Sat, Komisyon Ödeme",
+  description:
+    "Adil fiyatlar, sıfır komisyon. Sahibinden'e alternatif. İlanları görebilir, komisyon ödemeden alıp satabilirsiniz.",
+  keywords:
+    "emlak, araç, ikinci el, ilan sitesi, sahibinden alternatif, ücretsiz ilan, gayrimenkul, satılık daire, kiralık ev",
+  image: "https://alsatbedava.com/og-image.jpg",
+  url: "https://alsatbedava.com",
+  type: "website",
 };
 
 /**
@@ -38,69 +40,69 @@ export function updateMetaTags(config: Partial<SEOConfig>) {
 
   // Helper to set or update meta tag
   const setMetaTag = (name: string, content: string, isProperty = false) => {
-    const attribute = isProperty ? 'property' : 'name';
+    const attribute = isProperty ? "property" : "name";
     let element = document.querySelector(`meta[${attribute}="${name}"]`);
-    
+
     if (!element) {
-      element = document.createElement('meta');
+      element = document.createElement("meta");
       element.setAttribute(attribute, name);
       document.head.appendChild(element);
     }
-    
-    element.setAttribute('content', content);
+
+    element.setAttribute("content", content);
   };
 
   // Standard meta tags
-  setMetaTag('description', seo.description);
+  setMetaTag("description", seo.description);
   if (seo.keywords) {
-    setMetaTag('keywords', seo.keywords);
+    setMetaTag("keywords", seo.keywords);
   }
   if (seo.author) {
-    setMetaTag('author', seo.author);
+    setMetaTag("author", seo.author);
   }
 
   // Open Graph tags
-  setMetaTag('og:title', seo.title, true);
-  setMetaTag('og:description', seo.description, true);
-  setMetaTag('og:type', seo.type || 'website', true);
+  setMetaTag("og:title", seo.title, true);
+  setMetaTag("og:description", seo.description, true);
+  setMetaTag("og:type", seo.type || "website", true);
   if (seo.url) {
-    setMetaTag('og:url', seo.url, true);
+    setMetaTag("og:url", seo.url, true);
   }
   if (seo.image) {
-    setMetaTag('og:image', seo.image, true);
-    setMetaTag('og:image:width', '1200', true);
-    setMetaTag('og:image:height', '630', true);
+    setMetaTag("og:image", seo.image, true);
+    setMetaTag("og:image:width", "1200", true);
+    setMetaTag("og:image:height", "630", true);
   }
-  setMetaTag('og:site_name', 'Alsatbedava.com', true);
-  setMetaTag('og:locale', 'tr_TR', true);
+  setMetaTag("og:site_name", "Alsatbedava.com", true);
+  setMetaTag("og:locale", "tr_TR", true);
 
   // Twitter Card tags
-  setMetaTag('twitter:card', 'summary_large_image');
-  setMetaTag('twitter:title', seo.title);
-  setMetaTag('twitter:description', seo.description);
+  setMetaTag("twitter:card", "summary_large_image");
+  setMetaTag("twitter:title", seo.title);
+  setMetaTag("twitter:description", seo.description);
   if (seo.image) {
-    setMetaTag('twitter:image', seo.image);
+    setMetaTag("twitter:image", seo.image);
   }
 
   // Article-specific tags
-  if (seo.type === 'article') {
+  if (seo.type === "article") {
     if (seo.publishedTime) {
-      setMetaTag('article:published_time', seo.publishedTime, true);
+      setMetaTag("article:published_time", seo.publishedTime, true);
     }
     if (seo.modifiedTime) {
-      setMetaTag('article:modified_time', seo.modifiedTime, true);
+      setMetaTag("article:modified_time", seo.modifiedTime, true);
     }
     if (seo.author) {
-      setMetaTag('article:author', seo.author, true);
+      setMetaTag("article:author", seo.author, true);
     }
   }
 
   // Product-specific tags (for listings)
-  if (seo.type === 'product' && seo.price) {
-    setMetaTag('product:price:amount', seo.price.toString(), true);
-    setMetaTag('product:price:currency', seo.currency || 'TRY', true);
+  if (seo.type === "product" && seo.price) {
+    setMetaTag("product:price:amount", seo.price.toString(), true);
+    setMetaTag("product:price:currency", seo.currency || "TRY", true);
     if (seo.availability) {
-      setMetaTag('product:availability', seo.availability, true);
+      setMetaTag("product:availability", seo.availability, true);
     }
   }
 }
@@ -124,30 +126,30 @@ export function generateListingStructuredData(listing: {
   };
 }) {
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+    "@context": "https://schema.org",
+    "@type": "Product",
     name: listing.title,
     description: listing.description,
     image: listing.images,
     offers: {
-      '@type': 'Offer',
+      "@type": "Offer",
       price: listing.price,
-      priceCurrency: 'TRY',
-      availability: 'https://schema.org/InStock',
+      priceCurrency: "TRY",
+      availability: "https://schema.org/InStock",
       url: `https://alsatbedava.com/listing/${listing.id}`,
       seller: {
-        '@type': 'Person',
-        name: listing.user?.name || 'Alsatbedava Kullanıcısı',
+        "@type": "Person",
+        name: listing.user?.name || "Alsatbedava Kullanıcısı",
       },
     },
     category: listing.category,
     location: {
-      '@type': 'Place',
+      "@type": "Place",
       address: {
-        '@type': 'PostalAddress',
+        "@type": "PostalAddress",
         addressLocality: listing.district || listing.city,
         addressRegion: listing.city,
-        addressCountry: 'TR',
+        addressCountry: "TR",
       },
     },
     datePublished: listing.createdAt.toISOString(),
@@ -168,8 +170,8 @@ export function injectStructuredData(data: object) {
   }
 
   // Create new script tag
-  const script = document.createElement('script');
-  script.type = 'application/ld+json';
+  const script = document.createElement("script");
+  script.type = "application/ld+json";
   script.text = JSON.stringify(data);
   document.head.appendChild(script);
 }
@@ -177,12 +179,14 @@ export function injectStructuredData(data: object) {
 /**
  * Generate breadcrumb structured data
  */
-export function generateBreadcrumbStructuredData(items: { name: string; url: string }[]) {
+export function generateBreadcrumbStructuredData(
+  items: { name: string; url: string }[]
+) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: index + 1,
       name: item.name,
       item: item.url,
@@ -195,23 +199,29 @@ export function generateBreadcrumbStructuredData(items: { name: string; url: str
  */
 export function generateSlug(text: string): string {
   const turkishMap: Record<string, string> = {
-    'ç': 'c', 'Ç': 'C',
-    'ğ': 'g', 'Ğ': 'G',
-    'ı': 'i', 'İ': 'I',
-    'ö': 'o', 'Ö': 'O',
-    'ş': 's', 'Ş': 'S',
-    'ü': 'u', 'Ü': 'U',
+    ç: "c",
+    Ç: "C",
+    ğ: "g",
+    Ğ: "G",
+    ı: "i",
+    İ: "I",
+    ö: "o",
+    Ö: "O",
+    ş: "s",
+    Ş: "S",
+    ü: "u",
+    Ü: "U",
   };
 
   return text
-    .split('')
+    .split("")
     .map(char => turkishMap[char] || char)
-    .join('')
+    .join("")
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 /**
@@ -220,7 +230,7 @@ export function generateSlug(text: string): string {
 export function getCanonicalUrl(): string {
   const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) {
-    return canonical.getAttribute('href') || window.location.href;
+    return canonical.getAttribute("href") || window.location.href;
   }
   return window.location.href;
 }
@@ -230,12 +240,12 @@ export function getCanonicalUrl(): string {
  */
 export function setCanonicalUrl(url: string) {
   let canonical = document.querySelector('link[rel="canonical"]');
-  
+
   if (!canonical) {
-    canonical = document.createElement('link');
-    canonical.setAttribute('rel', 'canonical');
+    canonical = document.createElement("link");
+    canonical.setAttribute("rel", "canonical");
     document.head.appendChild(canonical);
   }
-  
-  canonical.setAttribute('href', url);
+
+  canonical.setAttribute("href", url);
 }

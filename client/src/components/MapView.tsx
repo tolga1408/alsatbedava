@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card } from "./ui/card";
 import { MapPin } from "lucide-react";
+import { getListingImages } from "@/lib/listingImages";
 
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -31,11 +39,20 @@ interface Listing {
 interface MapViewProps {
   listings: Listing[];
   onListingClick?: (listingId: number) => void;
-  onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
+  onBoundsChange?: (bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  }) => void;
 }
 
 // Component to handle bounds changes
-function BoundsHandler({ onBoundsChange }: { onBoundsChange?: (bounds: any) => void }) {
+function BoundsHandler({
+  onBoundsChange,
+}: {
+  onBoundsChange?: (bounds: any) => void;
+}) {
   const map = useMapEvents({
     moveend: () => {
       if (onBoundsChange) {
@@ -61,7 +78,7 @@ function FitBounds({ listings }: { listings: Listing[] }) {
     if (validListings.length > 0) {
       const bounds: L.LatLngBoundsExpression = validListings.map(l => [
         parseFloat(l.latitude!),
-        parseFloat(l.longitude!)
+        parseFloat(l.longitude!),
       ]);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
     }
@@ -70,7 +87,11 @@ function FitBounds({ listings }: { listings: Listing[] }) {
   return null;
 }
 
-export function MapView({ listings, onListingClick, onBoundsChange }: MapViewProps) {
+export function MapView({
+  listings,
+  onListingClick,
+  onBoundsChange,
+}: MapViewProps) {
   const [key, setKey] = useState(0);
 
   // Force re-render when listings change significantly
@@ -113,7 +134,7 @@ export function MapView({ listings, onListingClick, onBoundsChange }: MapViewPro
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
           />
-          
+
           <BoundsHandler onBoundsChange={onBoundsChange} />
           <FitBounds listings={validListings} />
 
@@ -129,15 +150,16 @@ export function MapView({ listings, onListingClick, onBoundsChange }: MapViewPro
                 html: `<div class="flex items-center justify-center w-full h-full">
                   <span class="text-white font-bold text-sm">${count}</span>
                 </div>`,
-                className: "custom-cluster-icon bg-primary rounded-full shadow-lg",
+                className:
+                  "custom-cluster-icon bg-primary rounded-full shadow-lg",
                 iconSize: L.point(40, 40),
               });
             }}
           >
-            {validListings.map((listing) => {
+            {validListings.map(listing => {
               const lat = parseFloat(listing.latitude!);
               const lng = parseFloat(listing.longitude!);
-              const images = listing.images ? JSON.parse(listing.images) : [];
+              const images = getListingImages(listing.images);
 
               return (
                 <Marker

@@ -49,6 +49,23 @@ JWT_SECRET=replace-with-a-long-random-secret
 Demo mode uses in-memory data. It is reset whenever the server restarts and is
 not intended for a real public launch.
 
+## Sites beta deployment
+
+The public beta uses OpenAI Sites with platform-provided ChatGPT sign-in, a D1
+database, and R2 image storage. Its logical bindings are declared in
+`.openai/hosting.json`; hosted resources and migrations are applied during the
+Sites deployment.
+
+Build the Sites release with:
+
+```bash
+pnpm run build:sites
+```
+
+The Sites build does not use the browser-only static demo store. Anonymous
+visitors can browse, while creating listings, messaging, favorites, saved
+searches, and reports require sign-in.
+
 Run database migrations:
 
 ```bash

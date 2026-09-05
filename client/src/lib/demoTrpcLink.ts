@@ -6,7 +6,7 @@ import superjson from "superjson";
 import { z } from "zod";
 
 const SESSION_KEY = "alsatbedava.demo.session";
-const STORE_KEY = "alsatbedava.demo.store.v1";
+const STORE_KEY = "alsatbedava.demo.store.v2";
 const DEMO_SESSION_VALUE = "demo-user";
 
 type DemoUser = {
@@ -68,6 +68,7 @@ type DemoSavedSearch = {
   userId: number;
   name: string;
   filters: {
+    search?: string;
     categoryId?: number;
     city?: string;
     minPrice?: number;
@@ -117,6 +118,46 @@ const demoCategories = [
     parentId: null,
     icon: "home",
     order: 1,
+    isActive: 1,
+    createdAt: demoDate(),
+  },
+  {
+    id: 2,
+    name: "Vasıta",
+    slug: "vasita",
+    parentId: null,
+    icon: "car",
+    order: 2,
+    isActive: 1,
+    createdAt: demoDate(),
+  },
+  {
+    id: 3,
+    name: "Elektronik",
+    slug: "elektronik",
+    parentId: null,
+    icon: "smartphone",
+    order: 3,
+    isActive: 1,
+    createdAt: demoDate(),
+  },
+  {
+    id: 4,
+    name: "Ev Eşyası",
+    slug: "ev-esyasi",
+    parentId: null,
+    icon: "armchair",
+    order: 4,
+    isActive: 1,
+    createdAt: demoDate(),
+  },
+  {
+    id: 5,
+    name: "Diğer",
+    slug: "diger",
+    parentId: null,
+    icon: "package",
+    order: 5,
     isActive: 1,
     createdAt: demoDate(),
   },
@@ -224,6 +265,276 @@ const initialListings: DemoListing[] = [
     createdAt: demoDate("2026-09-02T13:15:00.000Z"),
     updatedAt: demoDate("2026-09-02T13:15:00.000Z"),
   },
+  {
+    id: 30008,
+    userId: 5,
+    categoryId: 1,
+    title: "Bursa Nilüfer'de Geniş Balkonlu 2+1",
+    description:
+      "Metroya yakın, site içinde, yeni boyalı ve hemen taşınmaya hazır daire.",
+    price: 3450000,
+    currency: "TRY",
+    city: "Bursa",
+    district: "Nilüfer",
+    neighborhood: "Görükle",
+    latitude: "40.2281",
+    longitude: "28.8408",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 73,
+    favoriteCount: 6,
+    propertyType: "Daire",
+    rooms: 2,
+    size: 105,
+    createdAt: demoDate("2026-09-02T16:20:00.000Z"),
+    updatedAt: demoDate("2026-09-02T16:20:00.000Z"),
+  },
+  {
+    id: 30009,
+    userId: 6,
+    categoryId: 1,
+    title: "Antalya Lara'da Eşyalı 1+1 Kiralık",
+    description:
+      "Plaja yakın, klimalı, güvenlikli apartmanda kısa ve uzun dönem kullanıma uygun.",
+    price: 23500,
+    currency: "TRY",
+    city: "Antalya",
+    district: "Muratpaşa",
+    neighborhood: "Lara",
+    latitude: "36.8521",
+    longitude: "30.7856",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 61,
+    favoriteCount: 5,
+    propertyType: "Daire",
+    rooms: 1,
+    size: 62,
+    createdAt: demoDate("2026-09-02T17:10:00.000Z"),
+    updatedAt: demoDate("2026-09-02T17:10:00.000Z"),
+  },
+  {
+    id: 30010,
+    userId: 7,
+    categoryId: 2,
+    title: "2021 Toyota Corolla 1.5 Vision Otomatik",
+    description:
+      "Bakımları yetkili serviste yapılmış, değişensiz, aileden temiz araba.",
+    price: 915000,
+    currency: "TRY",
+    city: "İstanbul",
+    district: "Ataşehir",
+    neighborhood: "Atatürk",
+    latitude: "40.9848",
+    longitude: "29.1278",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 1,
+    viewCount: 312,
+    favoriteCount: 28,
+    propertyType: "Otomobil",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-02T18:00:00.000Z"),
+    updatedAt: demoDate("2026-09-02T18:00:00.000Z"),
+  },
+  {
+    id: 30011,
+    userId: 8,
+    categoryId: 2,
+    title: "2018 Volkswagen Golf 1.6 TDI Comfortline",
+    description:
+      "Düşük kilometreli, otomatik vites, tramer kaydı düşük temiz araç.",
+    price: 1085000,
+    currency: "TRY",
+    city: "Ankara",
+    district: "Etimesgut",
+    neighborhood: "Bağlıca",
+    latitude: "39.8958",
+    longitude: "32.6584",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 184,
+    favoriteCount: 14,
+    propertyType: "Otomobil",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T07:40:00.000Z"),
+    updatedAt: demoDate("2026-09-03T07:40:00.000Z"),
+  },
+  {
+    id: 30012,
+    userId: 9,
+    categoryId: 2,
+    title: "Yamaha MT-07 2020 Model Motosiklet",
+    description:
+      "Garaj motoru, ekstra aksesuarları mevcut, muayenesi yeni yapılmış.",
+    price: 385000,
+    currency: "TRY",
+    city: "İzmir",
+    district: "Karşıyaka",
+    neighborhood: "Bostanlı",
+    latitude: "38.4647",
+    longitude: "27.0945",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 143,
+    favoriteCount: 11,
+    propertyType: "Motosiklet",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T08:05:00.000Z"),
+    updatedAt: demoDate("2026-09-03T08:05:00.000Z"),
+  },
+  {
+    id: 30013,
+    userId: 10,
+    categoryId: 3,
+    title: "iPhone 15 Pro 256 GB Natural Titanium",
+    description:
+      "Kutulu, faturalı, pil sağlığı yüksek, kılıf ve ekran koruyucu hediyeli telefon.",
+    price: 62500,
+    currency: "TRY",
+    city: "İstanbul",
+    district: "Beşiktaş",
+    neighborhood: "Levent",
+    latitude: "41.0810",
+    longitude: "29.0134",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 1,
+    viewCount: 221,
+    favoriteCount: 19,
+    propertyType: "Telefon",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T08:20:00.000Z"),
+    updatedAt: demoDate("2026-09-03T08:20:00.000Z"),
+  },
+  {
+    id: 30014,
+    userId: 11,
+    categoryId: 3,
+    title: "MacBook Air M2 13 inç 16 GB RAM",
+    description:
+      "Ofis kullanımı, çiziksiz kasa, şarj aleti ve taşıma çantası ile birlikte.",
+    price: 44500,
+    currency: "TRY",
+    city: "İzmir",
+    district: "Konak",
+    neighborhood: "Alsancak",
+    latitude: "38.4370",
+    longitude: "27.1461",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 98,
+    favoriteCount: 7,
+    propertyType: "Bilgisayar",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T08:35:00.000Z"),
+    updatedAt: demoDate("2026-09-03T08:35:00.000Z"),
+  },
+  {
+    id: 30015,
+    userId: 12,
+    categoryId: 4,
+    title: "L Koltuk Takımı ve Orta Sehpa",
+    description:
+      "Yeni eve taşınma nedeniyle satılık, temiz kullanılmış modern salon takımı.",
+    price: 18500,
+    currency: "TRY",
+    city: "Bursa",
+    district: "Osmangazi",
+    neighborhood: "Doburca",
+    latitude: "40.1932",
+    longitude: "29.0101",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 87,
+    favoriteCount: 9,
+    propertyType: "Mobilya",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T08:50:00.000Z"),
+    updatedAt: demoDate("2026-09-03T08:50:00.000Z"),
+  },
+  {
+    id: 30016,
+    userId: 13,
+    categoryId: 4,
+    title: "Bosch No-Frost Buzdolabı",
+    description:
+      "Sorunsuz çalışan, geniş hacimli, enerji tasarruflu beyaz eşya.",
+    price: 14500,
+    currency: "TRY",
+    city: "Antalya",
+    district: "Kepez",
+    neighborhood: "Varsak",
+    latitude: "36.9308",
+    longitude: "30.7133",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 52,
+    favoriteCount: 4,
+    propertyType: "Beyaz Eşya",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T09:05:00.000Z"),
+    updatedAt: demoDate("2026-09-03T09:05:00.000Z"),
+  },
+  {
+    id: 30017,
+    userId: 14,
+    categoryId: 5,
+    title: "Profesyonel Fotoğraf Makinesi Seti",
+    description:
+      "Lens, çanta ve tripod dahil; hobi ve yarı profesyonel çekimler için uygun.",
+    price: 32500,
+    currency: "TRY",
+    city: "Ankara",
+    district: "Çankaya",
+    neighborhood: "Bahçelievler",
+    latitude: "39.9247",
+    longitude: "32.8226",
+    images: JSON.stringify([
+      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80",
+    ]),
+    status: "active",
+    isFeatured: 0,
+    viewCount: 75,
+    favoriteCount: 6,
+    propertyType: "Hobi",
+    rooms: null,
+    size: null,
+    createdAt: demoDate("2026-09-03T09:20:00.000Z"),
+    updatedAt: demoDate("2026-09-03T09:20:00.000Z"),
+  },
 ];
 
 const seedStore = (): DemoStore => ({
@@ -241,7 +552,7 @@ const seedStore = (): DemoStore => ({
     },
   ],
   savedSearches: [],
-  nextListingId: 30010,
+  nextListingId: 30030,
   nextFavoriteId: 1,
   nextMessageId: 2,
   nextSavedSearchId: 1,
@@ -321,6 +632,63 @@ const assertOwnedListing = (store: DemoStore, id: number, userId: number) => {
   }
 
   return listing;
+};
+
+const normalizeSearch = (value: string) =>
+  value
+    .toLocaleLowerCase("tr-TR")
+    .replaceAll("ı", "i")
+    .replaceAll("ğ", "g")
+    .replaceAll("ü", "u")
+    .replaceAll("ş", "s")
+    .replaceAll("ö", "o")
+    .replaceAll("ç", "c")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const categorySearchNames = new Map(
+  demoCategories.map(category => [category.id, category.name])
+);
+
+const searchSynonyms: Record<string, string[]> = {
+  car: ["araba", "otomobil", "arac", "vasita", "toyota", "volkswagen"],
+  cars: ["araba", "otomobil", "arac", "vasita", "toyota", "volkswagen"],
+  araba: ["car", "otomobil", "arac", "vasita"],
+  arac: ["car", "araba", "otomobil", "vasita"],
+  vasita: ["car", "araba", "otomobil", "motosiklet"],
+  house: ["ev", "daire", "villa", "emlak", "konut"],
+  home: ["ev", "daire", "villa", "emlak", "konut"],
+  ev: ["house", "home", "daire", "villa", "emlak"],
+  telefon: ["phone", "iphone", "elektronik"],
+  phone: ["telefon", "iphone", "elektronik"],
+  laptop: ["macbook", "bilgisayar", "elektronik"],
+};
+
+const searchGroupsFor = (query: string) =>
+  normalizeSearch(query)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(term => [term, ...(searchSynonyms[term] ?? [])].map(normalizeSearch));
+
+const listingMatchesSearch = (listing: DemoListing, query?: string) => {
+  const groups = query ? searchGroupsFor(query) : [];
+  if (!groups.length) return true;
+
+  const haystack = normalizeSearch(
+    [
+      listing.title,
+      listing.description,
+      listing.city,
+      listing.district,
+      listing.neighborhood,
+      listing.propertyType,
+      categorySearchNames.get(listing.categoryId),
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  return groups.every(group => group.some(term => haystack.includes(term)));
 };
 
 export const startStaticDemoSession = () => {
@@ -436,6 +804,7 @@ const demoRouter = t.router({
     search: publicProcedure
       .input(
         z.object({
+          search: z.string().optional(),
           categoryId: z.number().optional(),
           city: z.string().optional(),
           district: z.string().optional(),
@@ -458,6 +827,11 @@ const demoRouter = t.router({
         const store = readStore();
         let results = [...store.listings];
 
+        if (input.search) {
+          results = results.filter(listing =>
+            listingMatchesSearch(listing, input.search)
+          );
+        }
         if (input.categoryId) {
           results = results.filter(
             listing => listing.categoryId === input.categoryId
@@ -760,6 +1134,7 @@ const demoRouter = t.router({
         z.object({
           name: z.string().min(1),
           filters: z.object({
+            search: z.string().optional(),
             categoryId: z.number().optional(),
             city: z.string().optional(),
             minPrice: z.number().optional(),

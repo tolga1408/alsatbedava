@@ -8,9 +8,33 @@
 
 ---
 
+## Private Beta Launch Gate
+
+- [x] Public tester URL
+- [x] Transparent sample listings across five categories
+- [x] ChatGPT sign-in for beta testers
+- [x] Persistent users, listings, favorites, messages, saved searches, and reports
+- [x] Persistent JPG, PNG, and WebP listing photos
+- [x] Remove generated phone numbers and unverified trust claims
+- [x] Add server-side listing ownership and upload validation
+- [ ] Test account creation and sign-out with two independent accounts
+- [ ] Test one listing with photos across desktop and mobile
+- [ ] Test buyer-to-seller messaging between two accounts
+- [ ] Review the first moderation report in the production database
+- [ ] Add privacy policy, terms, and marketplace rules
+- [ ] Configure analytics and error monitoring
+- [ ] Connect and verify `alsatbedava.com`
+- [ ] Complete a 5-10 person beta feedback round
+
+Beta targets: API p50/p95/p99 below 200/500/1000 ms; mobile LCP below 2.5 s,
+INP below 200 ms, CLS below 0.1; 99.5% uptime.
+
+---
+
 ## REDESIGN PHASE - World-Class UI/UX
 
 ### Design System
+
 - [x] Research best marketplace designs (Airbnb, Zillow, Rightmove, Idealista)
 - [x] Research Turkish marketplace expectations (Sahibinden, Hepsiemlak, Hürriyet Emlak)
 - [x] Choose new color palette (Green/Emerald - trust & fairness vs Sahibinden's yellow)
@@ -19,6 +43,7 @@
 - [x] Create spacing/layout system
 
 ### Homepage Redesign
+
 - [x] Hero section with search and stats
 - [x] Trust signals (12,847 listings, 45,231 users, 3,421 sales)
 - [x] Featured listings grid with photos
@@ -28,14 +53,16 @@
 - [x] Mobile-optimized layout
 
 ### Listing Pages Redesign
-- [x] Information-dense listing cards with phone/message buttons
+
+- [x] Information-dense listing cards with persistent in-app messaging
 - [x] Better photo galleries with navigation
-- [x] Prominent contact buttons (WhatsApp, Phone, Message)
+- [x] Authenticated in-app contact flow
 - [x] View counters on cards
-- [x] Verification badges
+- [x] Transparent sample and beta-account labels
 - [ ] Similar listings section
 
 ### Advanced Features
+
 - [ ] Demo/seed listings with real photos for showcase
 - [x] Advanced filters (15 cities, price ranges with quick filters)
 - [ ] Map integration
@@ -45,6 +72,7 @@
 ---
 
 ## Phase 1: Database Schema & Core Models
+
 - [x] Design listings table (categories, pricing, location, images)
 - [x] Design categories table (hierarchical structure)
 - [x] Design favorites/watchlist table
@@ -53,6 +81,7 @@
 - [x] Push database schema
 
 ## Phase 2: Core Backend (COMPLETE)
+
 - [x] Database query functions for listings
 - [x] Database query functions for categories
 - [x] Database query functions for favorites
@@ -60,6 +89,7 @@
 - [x] tRPC API routes for all features
 
 ## Phase 3: Listing Features (COMPLETE)
+
 - [x] Create listing form (multi-step wizard)
 - [x] Image upload with S3 (drag & drop, preview)
 - [x] Category selection
@@ -67,22 +97,26 @@
 - [x] Price input
 
 ## Phase 4: Search & Browse (COMPLETE)
+
 - [x] Homepage with listings
 - [x] Browse page with filters
 - [x] Search functionality
 - [x] Listing detail page
 
 ## Phase 5: Messaging (COMPLETE)
+
 - [x] Message inbox
 - [x] Chat interface
 - [x] Send/receive messages
 - [x] Unread indicators
 
 ## Phase 6: User Dashboard (COMPLETE)
+
 - [x] My listings page
 - [x] Delete listings
 
 ## Map View Feature (NEW)
+
 - [x] Install Leaflet and React-Leaflet dependencies
 - [x] Create MapView component with listing markers
 - [x] Add map/list toggle to browse page
@@ -92,6 +126,7 @@
 - [x] Mobile-responsive map layout
 
 ## Search As I Move Map Feature (NEW)
+
 - [x] Update MapView to expose bounds change callback
 - [x] Add map bounds to search query parameters
 - [x] Implement backend filtering by geographic bounds (city-level)
@@ -101,6 +136,7 @@
 - [x] Add refresh button for manual updates
 
 ## Marker-to-Listing Highlight Feature (NEW)
+
 - [x] Add highlighted listing state in Browse page
 - [x] Implement auto-scroll to highlighted listing
 - [x] Update MapView to pass listing ID on marker click
@@ -109,6 +145,7 @@
 - [x] Add smooth transition animations
 
 ## Split-Screen View Feature (NEW)
+
 - [x] Add "Bölünmüş" (Split) view mode option
 - [x] Update view toggle UI with three buttons (Liste/Harita/Bölünmüş)
 - [x] Implement side-by-side layout for desktop (50/50 split with lg:flex-row)
@@ -118,6 +155,7 @@
 - [x] Add smooth transitions between view modes
 
 ## Database Seed Script (NEW)
+
 - [x] Create seed-db.mjs script with realistic Turkish property data
 - [x] Add 30 listings across Istanbul, Ankara, Izmir
 - [x] Include property photos from Unsplash
@@ -127,6 +165,7 @@
 - [x] Run seed script to populate database
 
 ## Draggable Split Divider (NEW)
+
 - [x] Add draggable divider component between map and list panels
 - [x] Implement mouse drag functionality with useEffect
 - [x] Set min/max constraints (30% - 70%)
@@ -135,6 +174,7 @@
 - [x] Persist split ratio in localStorage
 
 ## localStorage Persistence (NEW)
+
 - [x] Save/restore view mode (Liste/Harita/Bölünmüş)
 - [ ] Save/restore filter values (city, price range, search) - filters not persisted yet
 - [x] Save/restore split ratio preference
@@ -143,6 +183,7 @@
 - [x] Handle edge cases (invalid data, version changes)
 
 ## Precise Lat/Lng Coordinates (NEW)
+
 - [x] Add latitude and longitude columns to listings table
 - [x] Update seed script with accurate coordinates for all 30 listings
 - [x] Update MapView to use precise coordinates instead of city-level
@@ -150,6 +191,7 @@
 - [x] Test map positioning accuracy
 
 ## Marker Clustering (NEW)
+
 - [x] Install react-leaflet-cluster package
 - [x] Integrate clustering into MapView component (rewrote with React-Leaflet)
 - [x] Configure cluster styling to match brand colors
@@ -157,6 +199,7 @@
 - [x] Optimize cluster zoom behavior
 
 ## Saved Searches Feature (NEW)
+
 - [x] Add savedSearches table to schema (userId, name, filters, createdAt)
 - [x] Create backend procedures for CRUD operations (create, list, delete, toggleNotifications)
 - [x] Build SavedSearches UI component with cards and toggle switches
@@ -167,8 +210,8 @@
 - [ ] Create background job to check for new matching listings
 - [ ] Send email alerts when new listings match saved searches
 
-
 ## District-Level Filtering (NEW)
+
 - [x] Add district column to listings table schema (already exists)
 - [x] Update seed script with districts for all 30 listings (already done)
 - [x] Add popular districts for Istanbul (Kadıköy, Beşiktaş, Şişli, Sarıyer, Üsküdar, Bakırköy, Kartal, Maltepe, Pendik, Avcılar)
@@ -179,6 +222,7 @@
 - [ ] Test district filtering with map view and saved searches
 
 ## Listing Comparison Tool (NEW)
+
 - [ ] Add "Compare" checkbox to listing cards
 - [ ] Create comparison state management (max 4 listings)
 - [ ] Build comparison page/modal UI

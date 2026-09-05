@@ -1,17 +1,24 @@
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, Bell, BellOff, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { getCategoryName } from "@/lib/categoryOptions";
 
 export default function SavedSearches() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
-  
+
   const { data: searches, isLoading } = trpc.savedSearches.list.useQuery();
-  
+
   const deleteMutation = trpc.savedSearches.delete.useMutation({
     onSuccess: () => {
       utils.savedSearches.list.invalidate();
@@ -21,27 +28,34 @@ export default function SavedSearches() {
       toast.error("Silme işlemi başarısız oldu");
     },
   });
-  
-  const toggleNotificationsMutation = trpc.savedSearches.toggleNotifications.useMutation({
-    onSuccess: () => {
-      utils.savedSearches.list.invalidate();
-      toast.success("Bildirim ayarı güncellendi");
-    },
-  });
+
+  const toggleNotificationsMutation =
+    trpc.savedSearches.toggleNotifications.useMutation({
+      onSuccess: () => {
+        utils.savedSearches.list.invalidate();
+        toast.success("Bildirim ayarı güncellendi");
+      },
+    });
 
   const applySearch = (filters: any) => {
     // Navigate to browse page with filters
     const params = new URLSearchParams();
+    if (filters.search) params.set("search", filters.search);
     if (filters.city) params.set("city", filters.city);
     if (filters.minPrice) params.set("minPrice", filters.minPrice.toString());
     if (filters.maxPrice) params.set("maxPrice", filters.maxPrice.toString());
-    if (filters.categoryId) params.set("categoryId", filters.categoryId.toString());
-    
+    if (filters.categoryId)
+      params.set("categoryId", filters.categoryId.toString());
+
     setLocation(`/browse?${params.toString()}`);
   };
 
   const formatFilters = (filters: any) => {
     const parts = [];
+    if (filters.search) parts.push(`Arama: ${filters.search}`);
+    if (filters.categoryId) {
+      parts.push(`Kategori: ${getCategoryName(filters.categoryId)}`);
+    }
     if (filters.city) parts.push(`Şehir: ${filters.city}`);
     if (filters.minPrice || filters.maxPrice) {
       const priceRange = `${filters.minPrice ? `${(filters.minPrice / 1000000).toFixed(1)}M` : "0"} - ${filters.maxPrice ? `${(filters.maxPrice / 1000000).toFixed(1)}M` : "∞"} ₺`;
@@ -81,19 +95,23 @@ export default function SavedSearches() {
           <Card>
             <CardContent className="py-12 text-center">
               <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Henüz kayıtlı arama yok</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Henüz kayıtlı arama yok
+              </h3>
               <p className="text-muted-foreground mb-6">
-                İlan arama sayfasında filtrelerinizi ayarlayın ve "Aramayı Kaydet" butonuna tıklayın
+                İlan arama sayfasında filtrelerinizi ayarlayın ve "Aramayı
+                Kaydet" butonuna tıklayın
               </p>
-              <Button onClick={() => setLocation("/browse")}>
-                İlan Ara
-              </Button>
+              <Button onClick={() => setLocation("/browse")}>İlan Ara</Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {searches.map((search) => (
-              <Card key={search.id} className="hover:shadow-md transition-shadow">
+            {searches.map(search => (
+              <Card
+                key={search.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -111,7 +129,7 @@ export default function SavedSearches() {
                         )}
                         <Switch
                           checked={!!search.emailNotifications}
-                          onCheckedChange={(checked) => {
+                          onCheckedChange={checked => {
                             toggleNotificationsMutation.mutate({
                               id: search.id,
                               enabled: checked,
@@ -135,7 +153,11 @@ export default function SavedSearches() {
                       variant="outline"
                       size="icon"
                       onClick={() => {
-                        if (confirm("Bu aramayı silmek istediğinizden emin misiniz?")) {
+                        if (
+                          confirm(
+                            "Bu aramayı silmek istediğinizden emin misiniz?"
+                          )
+                        ) {
                           deleteMutation.mutate({ id: search.id });
                         }
                       }}

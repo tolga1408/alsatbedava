@@ -7,9 +7,6 @@ import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
 import {
   Home as HomeIcon,
-  Car,
-  Package,
-  Building2,
   Search,
   CheckCircle2,
   Shield,
@@ -25,15 +22,20 @@ import {
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
+import { getCategoryName, LISTING_CATEGORIES } from "@/lib/categoryOptions";
+import { getListingImages } from "@/lib/listingImages";
 
 export default function Home() {
   // SEO optimization
   useSEO({
-    title: 'Alsatbedava.com - Türkiye\'nin Adil Pazarı | Al, Sat, Komisyon Ödeme',
-    description: 'Gerçek ilanlar, adil fiyatlar, sıfır komisyon. Sahibinden\'e alternatif. Emlak, araç, elektronik ve daha fazlası. 12,847 ilan, 45,231 kullanıcı.',
-    keywords: 'emlak, araç, ikinci el, ilan sitesi, sahibinden alternatif, ücretsiz ilan, gayrimenkul, satılık daire, kiralık ev',
-    url: 'https://alsatbedava.com',
-    type: 'website',
+    title:
+      "Alsatbedava.com - Türkiye'nin Adil Pazarı | Al, Sat, Komisyon Ödeme",
+    description:
+      "Adil fiyatlar, sıfır komisyon. Sahibinden'e alternatif. Emlak, araç, elektronik ve daha fazlası.",
+    keywords:
+      "emlak, araç, ikinci el, ilan sitesi, sahibinden alternatif, ücretsiz ilan, gayrimenkul, satılık daire, kiralık ev",
+    url: "https://alsatbedava.com",
+    type: "website",
   });
 
   const { user, loading } = useAuth();
@@ -50,45 +52,10 @@ export default function Home() {
     setLocation(`/browse?search=${encodeURIComponent(searchQuery)}`);
   };
 
-  const categories = [
-    {
-      id: "emlak",
-      name: "Emlak",
-      subtitle: "Ev, Daire, Arsa",
-      icon: HomeIcon,
-      count: "12,847",
-      active: true,
-    },
-    {
-      id: "vasita",
-      name: "Vasıta",
-      subtitle: "Yakında",
-      icon: Car,
-      count: "Yakında",
-      active: false,
-    },
-    {
-      id: "ikinci-el",
-      name: "İkinci El",
-      subtitle: "Yakında",
-      icon: Package,
-      count: "Yakında",
-      active: false,
-    },
-    {
-      id: "diger",
-      name: "Diğer",
-      subtitle: "Yakında",
-      icon: Building2,
-      count: "Yakında",
-      active: false,
-    },
-  ];
-
   const stats = [
-    { label: "Aktif İlan", value: "12,847", icon: TrendingUp },
-    { label: "Kayıtlı Kullanıcı", value: "45,231", icon: Users },
-    { label: "Başarılı Satış", value: "3,421", icon: CheckCircle2 },
+    { label: "Örnek İlan", value: "13", icon: TrendingUp },
+    { label: "Kategori", value: "5", icon: Users },
+    { label: "Komisyon", value: "0 ₺", icon: CheckCircle2 },
   ];
 
   const features = [
@@ -100,9 +67,9 @@ export default function Home() {
     },
     {
       icon: Shield,
-      title: "Gerçek İlanlar",
+      title: "Sade İlan Deneyimi",
       description:
-        "Sahte ilanlarla savaşıyoruz. Her ilan doğrulanır ve gerçek kişilerden gelir.",
+        "İlanları kolayca inceleyin, filtreleyin ve satıcıyla hızlıca iletişime geçin.",
     },
     {
       icon: Zap,
@@ -121,9 +88,7 @@ export default function Home() {
             {APP_LOGO && (
               <img src={APP_LOGO} alt={APP_TITLE} className="h-8 w-8" />
             )}
-            <span className="text-xl font-bold text-primary">
-              {APP_TITLE}
-            </span>
+            <span className="text-xl font-bold text-primary">{APP_TITLE}</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -191,8 +156,8 @@ export default function Home() {
               </h1>
 
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Gerçek ilanlar, adil fiyatlar, sıfır komisyon. Sahibinden'e
-                alternatif.
+                Adil fiyatlar, sıfır komisyon. Emlak, araç, elektronik ve daha
+                fazlası için Sahibinden'e alternatif.
               </p>
 
               {/* Search Bar */}
@@ -205,7 +170,7 @@ export default function Home() {
                       placeholder="Ne arıyorsunuz? (ev, araba, telefon...)"
                       className="pl-10 h-14 text-lg"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={e => setSearchQuery(e.target.value)}
                     />
                   </div>
                   <Button type="submit" size="lg" className="h-14 px-8">
@@ -216,7 +181,7 @@ export default function Home() {
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 md:gap-8 pt-8">
-                {stats.map((stat) => (
+                {stats.map(stat => (
                   <div key={stat.label} className="space-y-2">
                     <div className="flex items-center justify-center gap-2 text-primary">
                       <stat.icon className="w-5 h-5" />
@@ -240,44 +205,36 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-center mb-12">
               Kategoriler
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={category.active ? `/browse?category=${category.id}` : "#"}
-                >
-                  <Card
-                    className={`hover:shadow-lg transition-all ${
-                      category.active
-                        ? "cursor-pointer border-primary/20 hover:border-primary"
-                        : "opacity-60 cursor-not-allowed"
-                    }`}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {LISTING_CATEGORIES.map(category => {
+                const CategoryIcon = category.icon;
+
+                return (
+                  <Link
+                    key={category.id}
+                    href={`/browse?category=${category.slug}`}
                   >
-                    <CardContent className="p-6 text-center space-y-4">
-                      <div
-                        className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
-                          category.active
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        <category.icon className="w-8 h-8" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {category.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {category.subtitle}
-                        </p>
-                        <p className="text-sm font-medium text-primary mt-2">
-                          {category.count} ilan
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                    <Card className="hover:shadow-lg transition-all cursor-pointer border-primary/20 hover:border-primary">
+                      <CardContent className="p-6 text-center space-y-4">
+                        <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+                          <CategoryIcon className="w-8 h-8" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {category.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {category.subtitle}
+                          </p>
+                          <p className="text-sm font-medium text-primary mt-2">
+                            {category.demoCount} örnek ilan
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -293,60 +250,64 @@ export default function Home() {
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recentListings.map((listing) => (
-                  <Link key={listing.id} href={`/listing/${listing.id}`}>
-                    <Card className="hover:shadow-xl transition-all cursor-pointer h-full">
-                      <div className="aspect-video bg-muted relative overflow-hidden">
-                        {listing.images && listing.images.length > 0 ? (
-                          <img
-                            src={listing.images[0]}
-                            alt={listing.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <HomeIcon className="w-16 h-16 text-muted-foreground" />
-                          </div>
-                        )}
-                        <Badge className="absolute top-2 right-2">
-                          Emlak
-                        </Badge>
-                      </div>
-                      <CardContent className="p-4 space-y-3">
-                        <h3 className="font-semibold text-lg line-clamp-2">
-                          {listing.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="w-4 h-4" />
-                          <span>
-                            {listing.city}
-                            {listing.district && `, ${listing.district}`}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <span className="text-2xl font-bold text-primary">
-                            {listing.price.toLocaleString("tr-TR")} ₺
-                          </span>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-4 h-4" />
-                              <span>
-                                {Math.floor(Math.random() * 500) + 50}
-                              </span>
+                {recentListings.map(listing => {
+                  const images = getListingImages(listing.images);
+
+                  return (
+                    <Link key={listing.id} href={`/listing/${listing.id}`}>
+                      <Card className="hover:shadow-xl transition-all cursor-pointer h-full">
+                        <div className="aspect-video bg-muted relative overflow-hidden">
+                          {images.length > 0 ? (
+                            <img
+                              src={images[0]}
+                              alt={listing.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <HomeIcon className="w-16 h-16 text-muted-foreground" />
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                            >
-                              <Heart className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          )}
+                          <Badge className="absolute top-2 right-2">
+                            {getCategoryName(listing.categoryId)}
+                          </Badge>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
+                        <CardContent className="p-4 space-y-3">
+                          <h3 className="font-semibold text-lg line-clamp-2">
+                            {listing.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="w-4 h-4" />
+                            <span>
+                              {listing.city}
+                              {listing.district && `, ${listing.district}`}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <span className="text-2xl font-bold text-primary">
+                              {listing.price.toLocaleString("tr-TR")} ₺
+                            </span>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                <span>
+                                  {Math.floor(Math.random() * 500) + 50}
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <Heart className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -359,7 +320,7 @@ export default function Home() {
               Neden Alsatbedava?
             </h2>
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {features.map((feature) => (
+              {features.map(feature => (
                 <Card key={feature.title} className="text-center">
                   <CardContent className="p-8 space-y-4">
                     <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -388,14 +349,22 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {user ? (
                 <Link href="/create-listing">
-                  <Button size="lg" variant="secondary" className="text-lg px-8">
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="text-lg px-8"
+                  >
                     İlan Ver
                   </Button>
                 </Link>
               ) : (
                 <>
                   <a href={getLoginUrl()}>
-                    <Button size="lg" variant="secondary" className="text-lg px-8">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="text-lg px-8"
+                    >
                       Ücretsiz Kayıt Ol
                     </Button>
                   </a>
@@ -422,20 +391,36 @@ export default function Home() {
             <div className="space-y-4">
               <h3 className="text-white font-semibold text-lg">Alsatbedava</h3>
               <p className="text-sm">
-                Türkiye'nin adil pazarı. Gerçek ilanlar, adil fiyatlar, sıfır
-                komisyon.
+                Türkiye'nin adil pazarı. Adil fiyatlar, sıfır komisyon.
               </p>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Kategoriler</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/browse?category=emlak" className="hover:text-white">
+                  <Link
+                    href="/browse?category=emlak"
+                    className="hover:text-white"
+                  >
                     Emlak
                   </Link>
                 </li>
-                <li className="text-gray-500">Vasıta (Yakında)</li>
-                <li className="text-gray-500">İkinci El (Yakında)</li>
+                <li>
+                  <Link
+                    href="/browse?category=vasita"
+                    className="hover:text-white"
+                  >
+                    Vasıta
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/browse?category=elektronik"
+                    className="hover:text-white"
+                  >
+                    Elektronik
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>

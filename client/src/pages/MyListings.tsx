@@ -7,20 +7,21 @@ import { trpc } from "@/lib/trpc";
 import { Home, MapPin, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { getListingImages } from "@/lib/listingImages";
 
 export default function MyListings() {
   const { user, isAuthenticated, loading } = useAuth();
   const utils = trpc.useUtils();
 
-  const { data: myListings, isLoading: listingsLoading } = trpc.listings.search.useQuery(
-    { status: "active" },
-    { enabled: isAuthenticated }
-  );
+  const { data: myListings, isLoading: listingsLoading } =
+    trpc.listings.myListings.useQuery(undefined, {
+      enabled: isAuthenticated,
+    });
 
   const deleteMutation = trpc.listings.delete.useMutation({
     onSuccess: () => {
       toast.success("İlan silindi");
-      utils.listings.search.invalidate();
+      utils.listings.myListings.invalidate();
     },
     onError: () => {
       toast.error("İlan silinirken hata oluştu");
@@ -53,7 +54,7 @@ export default function MyListings() {
     );
   }
 
-  const userListings = myListings?.filter((l) => l.userId === user?.id) || [];
+  const userListings = myListings?.filter(l => l.userId === user?.id) || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -96,7 +97,7 @@ export default function MyListings() {
           <TabsContent value="active">
             {listingsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <Card key={i} className="animate-pulse">
                     <div className="h-48 bg-gray-200" />
                     <CardContent className="py-4">
@@ -108,8 +109,8 @@ export default function MyListings() {
               </div>
             ) : userListings.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userListings.map((listing) => {
-                  const images = listing.images ? JSON.parse(listing.images) : [];
+                {userListings.map(listing => {
+                  const images = getListingImages(listing.images);
                   return (
                     <Card key={listing.id}>
                       <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -124,13 +125,18 @@ export default function MyListings() {
                         )}
                       </div>
                       <CardContent className="py-4">
-                        <h3 className="font-semibold mb-2 line-clamp-2">{listing.title}</h3>
+                        <h3 className="font-semibold mb-2 line-clamp-2">
+                          {listing.title}
+                        </h3>
                         <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
                           <MapPin className="h-4 w-4" />
-                          <span>{listing.city}{listing.district && `, ${listing.district}`}</span>
+                          <span>
+                            {listing.city}
+                            {listing.district && `, ${listing.district}`}
+                          </span>
                         </div>
                         <div className="text-2xl font-bold text-blue-600 mb-4">
-                          {listing.price.toLocaleString('tr-TR')} ₺
+                          {listing.price.toLocaleString("tr-TR")} ₺
                         </div>
 
                         <div className="flex gap-2">
@@ -146,7 +152,11 @@ export default function MyListings() {
                             variant="destructive"
                             className="flex-1"
                             onClick={() => {
-                              if (confirm("Bu ilanı silmek istediğinizden emin misiniz?")) {
+                              if (
+                                confirm(
+                                  "Bu ilanı silmek istediğinizden emin misiniz?"
+                                )
+                              ) {
                                 deleteMutation.mutate({ id: listing.id });
                               }
                             }}

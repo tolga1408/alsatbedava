@@ -2,13 +2,29 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
   Heart,
   Home,
   MapPin,
-  Phone,
   Share2,
   MessageCircle,
   Eye,
@@ -23,8 +39,10 @@ import {
 } from "lucide-react";
 import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
-import { APP_LOGO, APP_TITLE } from "@/const";
+import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useState } from "react";
+import { getCategoryName } from "@/lib/categoryOptions";
+import { getListingImages } from "@/lib/listingImages";
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -32,7 +50,11 @@ export default function ListingDetail() {
   const { user, isAuthenticated } = useAuth();
   const listingId = parseInt(id || "0");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showPhone, setShowPhone] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("fraud");
+  const [reportDescription, setReportDescription] = useState("");
 
   const { data: listing, isLoading } = trpc.listings.getById.useQuery({
     id: listingId,
@@ -45,6 +67,25 @@ export default function ListingDetail() {
     onError: () => {
       toast.error("Favorilere eklenirken hata oluştu");
     },
+  });
+
+  const messageMutation = trpc.messages.send.useMutation({
+    onSuccess: () => {
+      toast.success("Mesaj gönderildi");
+      setMessage("");
+      setMessageOpen(false);
+      setLocation("/messages");
+    },
+    onError: error => toast.error(error.message),
+  });
+
+  const reportMutation = trpc.reports.create.useMutation({
+    onSuccess: () => {
+      toast.success("Bildiriminiz incelemeye alındı");
+      setReportDescription("");
+      setReportOpen(false);
+    },
+    onError: error => toast.error(error.message),
   });
 
   if (isLoading) {
@@ -94,14 +135,10 @@ export default function ListingDetail() {
     );
   }
 
-  const images = listing.images ? JSON.parse(listing.images) : [];
-  const randomViews = Math.floor(Math.random() * 500) + 50;
-  const randomPhone = `0${Math.floor(Math.random() * 9) + 5}${Math.floor(
-    Math.random() * 90000000
-  ) + 10000000}`;
-  const formattedPhone = showPhone
-    ? randomPhone
-    : `${randomPhone.slice(0, 4)} *** ** **`;
+  const images = getListingImages(listing.images);
+  const categoryName = getCategoryName(listing.categoryId);
+  const isSampleListing = listing.id >= 30005 && listing.id <= 30014;
+  const isOwnListing = user?.id === listing.userId;
 
   const handleShare = () => {
     if (navigator.share) {
@@ -116,19 +153,12 @@ export default function ListingDetail() {
     }
   };
 
-  const handleWhatsApp = () => {
-    const message = encodeURIComponent(
-      `Merhaba, ${listing.title} ilanınız hakkında bilgi almak istiyorum. ${window.location.href}`
-    );
-    window.open(`https://wa.me/${randomPhone.replace(/\s/g, "")}?text=${message}`, "_blank");
-  };
-
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    setCurrentImageIndex(prev => (prev + 1) % images.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentImageIndex(prev => (prev - 1 + images.length) % images.length);
   };
 
   return (
@@ -221,11 +251,19 @@ export default function ListingDetail() {
                   </div>
                 )}
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <Badge className="bg-primary/90 backdrop-blur">Emlak</Badge>
-                  <Badge variant="secondary" className="bg-white/90 backdrop-blur">
-                    <Eye className="w-3 h-3 mr-1" />
-                    {randomViews}
+                  <Badge className="bg-primary/90 backdrop-blur">
+                    {categoryName}
                   </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="bg-white/90 backdrop-blur"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    {listing.viewCount}
+                  </Badge>
+                  {isSampleListing && (
+                    <Badge variant="secondary">Örnek beta ilanı</Badge>
+                  )}
                 </div>
               </div>
               {images.length > 1 && (
@@ -297,7 +335,7 @@ export default function ListingDetail() {
               <Card>
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">
-                    Emlak Özellikleri
+                    {categoryName} Özellikleri
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                     {(listing as any).propertyType && (
@@ -307,7 +345,7 @@ export default function ListingDetail() {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">
-                            Emlak Tipi
+                            İlan Tipi
                           </p>
                           <p className="font-semibold">
                             {(listing as any).propertyType}
@@ -373,20 +411,21 @@ export default function ListingDetail() {
                       <li className="flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span>
-                          Ödeme yapmadan önce mutlaka emlağı yerinde görün
+                          Ürünü görmeden veya doğrulamadan ödeme yapmayın
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span>
-                          Peşin ödeme talep edenlerden ve şüpheli fiyatlardan uzak
-                          durun
+                          Peşin ödeme talep edenlerden ve şüpheli fiyatlardan
+                          uzak durun
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span>
-                          Tapu kontrolü yapın ve resmi işlemleri takip edin
+                          Şüpheli ilanları bildirin; kişisel bilgilerinizi
+                          paylaşmayın
                         </span>
                       </li>
                     </ul>
@@ -404,57 +443,31 @@ export default function ListingDetail() {
                 <CardContent className="p-6 space-y-4">
                   <h3 className="font-semibold text-lg">İletişim</h3>
 
-                  {/* Phone */}
-                  <div>
+                  {isSampleListing ? (
+                    <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
+                      Bu ilan yalnızca beta özelliklerini göstermek için
+                      hazırlanmıştır. Örnek satıcıya mesaj gönderilemez.
+                    </div>
+                  ) : isOwnListing ? (
+                    <Link href="/my-listings">
+                      <Button className="w-full" size="lg">
+                        İlanımı yönet
+                      </Button>
+                    </Link>
+                  ) : (
                     <Button
                       className="w-full"
                       size="lg"
                       onClick={() => {
-                        setShowPhone(true);
-                        window.location.href = `tel:${randomPhone}`;
-                      }}
-                    >
-                      <Phone className="w-5 h-5 mr-2" />
-                      {formattedPhone}
-                    </Button>
-                    {!showPhone && (
-                      <p className="text-xs text-muted-foreground text-center mt-2">
-                        Telefonu görmek için tıklayın
-                      </p>
-                    )}
-                  </div>
-
-                  {/* WhatsApp */}
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    size="lg"
-                    onClick={handleWhatsApp}
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2 text-green-600" />
-                    WhatsApp ile Yaz
-                  </Button>
-
-                  {/* Message */}
-                  {isAuthenticated ? (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        // TODO: Open message dialog
-                        toast.info("Mesajlaşma özelliği yakında!");
+                        if (!isAuthenticated) {
+                          window.location.href = getLoginUrl();
+                          return;
+                        }
+                        setMessageOpen(true);
                       }}
                     >
                       <MessageCircle className="w-5 h-5 mr-2" />
-                      Mesaj Gönder
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setLocation("/create-listing")}
-                    >
-                      Mesaj göndermek için giriş yapın
+                      Satıcıya mesaj gönder
                     </Button>
                   )}
                 </CardContent>
@@ -471,10 +484,13 @@ export default function ListingDetail() {
                       </span>
                     </div>
                     <div>
-                      <p className="font-semibold">Kullanıcı #{listing.userId}</p>
+                      <p className="font-semibold">
+                        {isSampleListing
+                          ? "Örnek satıcı"
+                          : `Kullanıcı #${listing.userId}`}
+                      </p>
                       <Badge variant="secondary" className="text-xs">
-                        <Shield className="w-3 h-3 mr-1" />
-                        Doğrulanmış
+                        {isSampleListing ? "Demo içerik" : "Beta hesabı"}
                       </Badge>
                     </div>
                   </div>
@@ -482,13 +498,9 @@ export default function ListingDetail() {
                     <div className="flex justify-between">
                       <span>Üyelik:</span>
                       <span>
-                        {new Date(listing.createdAt).toLocaleDateString("tr-TR")}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Aktif İlan:</span>
-                      <span className="font-semibold">
-                        {Math.floor(Math.random() * 10) + 1}
+                        {new Date(listing.createdAt).toLocaleDateString(
+                          "tr-TR"
+                        )}
                       </span>
                     </div>
                   </div>
@@ -496,14 +508,132 @@ export default function ListingDetail() {
               </Card>
 
               {/* Report */}
-              <Button variant="ghost" className="w-full text-destructive">
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                İlanı Bildir
-              </Button>
+              {!isOwnListing && !isSampleListing && (
+                <Button
+                  variant="ghost"
+                  className="w-full text-destructive"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      window.location.href = getLoginUrl();
+                      return;
+                    }
+                    setReportOpen(true);
+                  }}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  İlanı bildir
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Satıcıya mesaj gönder</DialogTitle>
+            <DialogDescription>{listing.title}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="listing-message">Mesajınız</Label>
+            <Textarea
+              id="listing-message"
+              value={message}
+              onChange={event => setMessage(event.target.value)}
+              rows={5}
+              maxLength={2000}
+              placeholder="Ürünün durumu ve teslimat seçenekleri hakkında bilgi almak istiyorum."
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              onClick={() =>
+                messageMutation.mutate({
+                  listingId: listing.id,
+                  receiverId: listing.userId,
+                  content: message,
+                })
+              }
+              disabled={
+                message.trim().length === 0 || messageMutation.isPending
+              }
+            >
+              {messageMutation.isPending ? "Gönderiliyor..." : "Mesaj gönder"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>İlanı bildir</DialogTitle>
+            <DialogDescription>
+              Bildiriminiz inceleme sırasında ilan sahibine gösterilmez.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="report-reason">Neden</Label>
+              <Select value={reportReason} onValueChange={setReportReason}>
+                <SelectTrigger id="report-reason">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fraud">Şüpheli veya yanıltıcı</SelectItem>
+                  <SelectItem value="spam">Spam</SelectItem>
+                  <SelectItem value="inappropriate">Uygunsuz içerik</SelectItem>
+                  <SelectItem value="sold">
+                    Satılmış veya mevcut değil
+                  </SelectItem>
+                  <SelectItem value="other">Diğer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="report-description">
+                Açıklama (isteğe bağlı)
+              </Label>
+              <Textarea
+                id="report-description"
+                value={reportDescription}
+                onChange={event => setReportDescription(event.target.value)}
+                rows={4}
+                maxLength={1000}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReportOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                reportMutation.mutate({
+                  listingId: listing.id,
+                  reason: reportReason as
+                    | "spam"
+                    | "fraud"
+                    | "inappropriate"
+                    | "sold"
+                    | "other",
+                  description: reportDescription || undefined,
+                })
+              }
+              disabled={reportMutation.isPending}
+            >
+              {reportMutation.isPending
+                ? "Gönderiliyor..."
+                : "Bildirimi gönder"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

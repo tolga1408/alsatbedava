@@ -1,4 +1,4 @@
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, getLogoutUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -25,6 +25,11 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
+    if (import.meta.env.VITE_SITES_BETA === "true") {
+      window.location.href = getLogoutUrl();
+      return;
+    }
+
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {

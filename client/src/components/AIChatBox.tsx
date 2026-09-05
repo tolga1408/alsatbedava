@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 
 /**
- * Message type matching server-side LLM Message interface
+ * Message type matching a typical server-side chat API.
  */
 export type Message = {
   role: "system" | "user" | "assistant";
@@ -17,7 +17,6 @@ export type Message = {
 export type AIChatBoxProps = {
   /**
    * Messages array to display in the chat.
-   * Should match the format used by invokeLLM on the server.
    */
   messages: Message[];
 
@@ -60,10 +59,10 @@ export type AIChatBoxProps = {
 };
 
 /**
- * A ready-to-use AI chat box component that integrates with the LLM system.
+ * A ready-to-use AI chat box component.
  *
  * Features:
- * - Matches server-side Message interface for seamless integration
+ * - Matches a simple chat message interface for seamless integration
  * - Markdown rendering with Streamdown
  * - Auto-scrolls to latest message
  * - Loading states

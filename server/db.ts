@@ -1,18 +1,18 @@
-import { eq, and, or, desc, sql } from "drizzle-orm";
+import { eq, and, or, desc, sql, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { 
-  InsertUser, 
-  users, 
-  listings, 
+import {
+  InsertUser,
+  users,
+  listings,
   InsertListing,
   categories,
   favorites,
   messages,
   reports,
   savedSearches,
-  InsertSavedSearch
+  InsertSavedSearch,
 } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -130,6 +130,7 @@ let demoListings: any[] = [
 let demoFavorites: any[] = [];
 let demoMessages: any[] = [];
 let demoSavedSearches: any[] = [];
+let demoReports: any[] = [];
 
 function useDemoStore() {
   return ENV.demoMode && !process.env.DATABASE_URL;
@@ -209,8 +210,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+      values.role = "admin";
+      updateSet.role = "admin";
     }
 
     if (!values.lastSignedIn) {
@@ -241,7 +242,11 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
@@ -275,7 +280,7 @@ export async function createListing(listing: InsertListing) {
 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const [result] = await db.insert(listings).values(listing);
   return result.insertId;
 }
@@ -287,8 +292,12 @@ export async function getListingById(id: number) {
 
   const db = await getDb();
   if (!db) return undefined;
-  
-  const [listing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1);
+
+  const [listing] = await db
+    .select()
+    .from(listings)
+    .where(eq(listings.id, id))
+    .limit(1);
   return listing;
 }
 
@@ -299,8 +308,12 @@ export async function getListingsByUserId(userId: number) {
 
   const db = await getDb();
   if (!db) return [];
-  
-  return await db.select().from(listings).where(eq(listings.userId, userId)).orderBy(listings.createdAt);
+
+  return await db
+    .select()
+    .from(listings)
+    .where(eq(listings.userId, userId))
+    .orderBy(listings.createdAt);
 }
 
 // City coordinates for bounds filtering
@@ -323,6 +336,7 @@ const CITY_COORDINATES: Record<string, [number, number]> = {
 };
 
 export async function searchListings(params: {
+  search?: string;
   categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
@@ -336,8 +350,27 @@ export async function searchListings(params: {
   if (useDemoStore()) {
     let results = [...demoListings];
 
+    if (params.search?.trim()) {
+      const query = params.search.trim().toLocaleLowerCase("tr-TR");
+      results = results.filter(listing =>
+        [
+          listing.title,
+          listing.description,
+          listing.city,
+          listing.district,
+          listing.neighborhood,
+          listing.propertyType,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("tr-TR")
+          .includes(query)
+      );
+    }
     if (params.categoryId) {
-      results = results.filter(listing => listing.categoryId === params.categoryId);
+      results = results.filter(
+        listing => listing.categoryId === params.categoryId
+      );
     }
     if (params.status) {
       results = results.filter(listing => listing.status === params.status);
@@ -373,11 +406,22 @@ export async function searchListings(params: {
 
   const db = await getDb();
   if (!db) return [];
-  
+
   const conditions = [];
-  
+
   if (params.categoryId) {
     conditions.push(eq(listings.categoryId, params.categoryId));
+  }
+  if (params.search?.trim()) {
+    const query = `%${params.search.trim()}%`;
+    conditions.push(
+      or(
+        like(listings.title, query),
+        like(listings.description, query),
+        like(listings.city, query),
+        like(listings.district, query)
+      ) as any
+    );
   }
   if (params.status) {
     conditions.push(eq(listings.status, params.status as any));
@@ -388,51 +432,63 @@ export async function searchListings(params: {
   if (params.district) {
     conditions.push(eq(listings.district, params.district));
   }
-  
+
   // Filter by bounds if provided (using city coordinates)
   if (params.bounds) {
     const citiesInBounds = Object.entries(CITY_COORDINATES)
       .filter(([_, coords]) => {
         const [lat, lng] = coords;
-        return lat >= params.bounds!.south && 
-               lat <= params.bounds!.north &&
-               lng >= params.bounds!.west && 
-               lng <= params.bounds!.east;
+        return (
+          lat >= params.bounds!.south &&
+          lat <= params.bounds!.north &&
+          lng >= params.bounds!.west &&
+          lng <= params.bounds!.east
+        );
       })
       .map(([city]) => city);
-    
+
     if (citiesInBounds.length > 0) {
       // Only filter by cities in bounds if we found any
-      const cityConditions = citiesInBounds.map(city => eq(listings.city, city));
+      const cityConditions = citiesInBounds.map(city =>
+        eq(listings.city, city)
+      );
       conditions.push(or(...cityConditions) as any);
     } else {
       // No cities in bounds, return empty result
       return [];
     }
   }
-  
+
   let query = db.select().from(listings);
-  
+
   if (conditions.length > 0) {
     query = query.where(and(...conditions)) as any;
   }
-  
-  const results = await query.orderBy(listings.createdAt).limit(params.limit || 20).offset(params.offset || 0);
-  
+
+  const results = await query
+    .orderBy(listings.createdAt)
+    .limit(params.limit || 20)
+    .offset(params.offset || 0);
+
   return results;
 }
 
-export async function updateListing(id: number, updates: Partial<InsertListing>) {
+export async function updateListing(
+  id: number,
+  updates: Partial<InsertListing>
+) {
   if (useDemoStore()) {
     demoListings = demoListings.map(listing =>
-      listing.id === id ? { ...listing, ...updates, updatedAt: new Date() } : listing
+      listing.id === id
+        ? { ...listing, ...updates, updatedAt: new Date() }
+        : listing
     );
     return;
   }
 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.update(listings).set(updates).where(eq(listings.id, id));
 }
 
@@ -445,7 +501,7 @@ export async function deleteListing(id: number) {
 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.delete(listings).where(eq(listings.id, id));
 }
 
@@ -457,7 +513,7 @@ export async function getAllCategories() {
 
   const db = await getDb();
   if (!db) return [];
-  
+
   return await db.select().from(categories).orderBy(categories.name);
 }
 
@@ -468,8 +524,12 @@ export async function getCategoryById(id: number) {
 
   const db = await getDb();
   if (!db) return undefined;
-  
-  const [category] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+
+  const [category] = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.id, id))
+    .limit(1);
   return category;
 }
 
@@ -478,7 +538,8 @@ export async function addFavorite(userId: number, listingId: number) {
   if (useDemoStore()) {
     if (
       !demoFavorites.some(
-        favorite => favorite.userId === userId && favorite.listingId === listingId
+        favorite =>
+          favorite.userId === userId && favorite.listingId === listingId
       )
     ) {
       demoFavorites.push({
@@ -493,7 +554,7 @@ export async function addFavorite(userId: number, listingId: number) {
 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   await db.insert(favorites).values({ userId, listingId });
 }
 
@@ -507,13 +568,12 @@ export async function removeFavorite(userId: number, listingId: number) {
 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  await db.delete(favorites).where(
-    and(
-      eq(favorites.userId, userId),
-      eq(favorites.listingId, listingId)
-    )
-  );
+
+  await db
+    .delete(favorites)
+    .where(
+      and(eq(favorites.userId, userId), eq(favorites.listingId, listingId))
+    );
 }
 
 export async function getUserFavorites(userId: number) {
@@ -523,7 +583,7 @@ export async function getUserFavorites(userId: number) {
 
   const db = await getDb();
   if (!db) return [];
-  
+
   return await db.select().from(favorites).where(eq(favorites.userId, userId));
 }
 
@@ -546,8 +606,8 @@ export async function sendMessage(data: {
   }
 
   const db = await getDb();
-  if (!db) throw new Error('Database not available');
-  
+  if (!db) throw new Error("Database not available");
+
   const result = await db.insert(messages).values(data);
   return result[0].insertId;
 }
@@ -578,25 +638,20 @@ export async function getConversations(userId: number) {
 
   const db = await getDb();
   if (!db) return [];
-  
+
   // Get all messages where user is sender or receiver
   const allMessages = await db
     .select()
     .from(messages)
-    .where(
-      or(
-        eq(messages.senderId, userId),
-        eq(messages.receiverId, userId)
-      )
-    )
+    .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
     .orderBy(desc(messages.createdAt));
-  
+
   // Group by conversation partner
   const conversationsMap = new Map();
-  
+
   for (const msg of allMessages) {
     const partnerId = msg.senderId === userId ? msg.receiverId : msg.senderId;
-    
+
     if (!conversationsMap.has(partnerId)) {
       conversationsMap.set(partnerId, {
         partnerId,
@@ -610,11 +665,15 @@ export async function getConversations(userId: number) {
       conv.unreadCount += 1;
     }
   }
-  
+
   return Array.from(conversationsMap.values());
 }
 
-export async function getConversationMessages(userId: number, partnerId: number, listingId: number) {
+export async function getConversationMessages(
+  userId: number,
+  partnerId: number,
+  listingId: number
+) {
   if (useDemoStore()) {
     const msgs = demoMessages.filter(
       msg =>
@@ -636,7 +695,7 @@ export async function getConversationMessages(userId: number, partnerId: number,
 
   const db = await getDb();
   if (!db) return [];
-  
+
   const msgs = await db
     .select()
     .from(messages)
@@ -648,15 +707,12 @@ export async function getConversationMessages(userId: number, partnerId: number,
             eq(messages.senderId, userId),
             eq(messages.receiverId, partnerId)
           ),
-          and(
-            eq(messages.senderId, partnerId),
-            eq(messages.receiverId, userId)
-          )
+          and(eq(messages.senderId, partnerId), eq(messages.receiverId, userId))
         )
       )
     )
     .orderBy(messages.createdAt);
-  
+
   // Mark messages as read
   await db
     .update(messages)
@@ -668,10 +724,9 @@ export async function getConversationMessages(userId: number, partnerId: number,
         eq(messages.listingId, listingId)
       )
     );
-  
+
   return msgs;
 }
-
 
 // ===== Saved Searches Functions =====
 
@@ -740,19 +795,24 @@ export async function deleteSavedSearch(id: number, userId: number) {
 
   await db
     .delete(savedSearches)
-    .where(and(
-      eq(savedSearches.id, id),
-      eq(savedSearches.userId, userId)
-    ));
+    .where(and(eq(savedSearches.id, id), eq(savedSearches.userId, userId)));
 
   return { success: true };
 }
 
-export async function toggleSavedSearchNotifications(id: number, userId: number, enabled: boolean) {
+export async function toggleSavedSearchNotifications(
+  id: number,
+  userId: number,
+  enabled: boolean
+) {
   if (useDemoStore()) {
     demoSavedSearches = demoSavedSearches.map(search =>
       search.id === id && search.userId === userId
-        ? { ...search, emailNotifications: enabled ? 1 : 0, updatedAt: new Date() }
+        ? {
+            ...search,
+            emailNotifications: enabled ? 1 : 0,
+            updatedAt: new Date(),
+          }
         : search
     );
     return { success: true };
@@ -764,10 +824,37 @@ export async function toggleSavedSearchNotifications(id: number, userId: number,
   await db
     .update(savedSearches)
     .set({ emailNotifications: enabled ? 1 : 0 })
-    .where(and(
-      eq(savedSearches.id, id),
-      eq(savedSearches.userId, userId)
-    ));
+    .where(and(eq(savedSearches.id, id), eq(savedSearches.userId, userId)));
 
   return { success: true };
+}
+
+export async function createReport(data: {
+  listingId: number;
+  reporterId: number;
+  reason: string;
+  description?: string;
+}) {
+  if (useDemoStore()) {
+    const id = demoReports.length + 1;
+    demoReports.push({
+      id,
+      ...data,
+      description: data.description ?? null,
+      status: "pending",
+      createdAt: new Date(),
+    });
+    return id;
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const [result] = await db.insert(reports).values({
+    listingId: data.listingId,
+    reporterId: data.reporterId,
+    reason: data.reason,
+    description: data.description ?? null,
+  });
+  return result.insertId;
 }

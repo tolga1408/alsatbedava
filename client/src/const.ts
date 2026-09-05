@@ -19,8 +19,17 @@ const getDemoLoginUrl = () => {
   return `${loginPath}?redirect=${encodeURIComponent(redirect)}`;
 };
 
+const getCurrentReturnPath = () =>
+  typeof window === "undefined"
+    ? "/"
+    : `${window.location.pathname}${window.location.search}`;
+
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
+  if (import.meta.env.VITE_SITES_BETA === "true") {
+    return `/signin-with-chatgpt?return_to=${encodeURIComponent(getCurrentReturnPath())}`;
+  }
+
   const authorizeUrl = import.meta.env.VITE_OAUTH_AUTHORIZE_URL;
   const clientId = import.meta.env.VITE_OAUTH_CLIENT_ID;
   const scope = import.meta.env.VITE_OAUTH_SCOPE || "openid profile email";
@@ -47,3 +56,8 @@ export const getLoginUrl = () => {
 
   return url.toString();
 };
+
+export const getLogoutUrl = () =>
+  import.meta.env.VITE_SITES_BETA === "true"
+    ? "/signout-with-chatgpt?return_to=%2F"
+    : "/";
