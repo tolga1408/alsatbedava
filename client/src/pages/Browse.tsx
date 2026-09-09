@@ -45,6 +45,8 @@ import {
   LISTING_CATEGORIES,
 } from "@/lib/categoryOptions";
 import { getListingImages } from "@/lib/listingImages";
+import { BrowseCategoryFilters } from "@/components/BrowseCategoryFilters";
+import { inferListingCategoryId } from "@shared/listingSearch";
 
 type CategoryFilter = number | "all";
 
@@ -55,7 +57,20 @@ type BrowseFilters = {
   minPrice: string;
   maxPrice: string;
   categoryId: CategoryFilter;
+  propertyType: string;
+  minRooms: string;
+  maxRooms: string;
+  minSize: string;
+  maxSize: string;
 };
+
+const emptyCategoryFilters = () => ({
+  propertyType: "",
+  minRooms: "",
+  maxRooms: "",
+  minSize: "",
+  maxSize: "",
+});
 
 const getInitialFilters = (): BrowseFilters => {
   if (typeof window === "undefined") {
@@ -66,6 +81,7 @@ const getInitialFilters = (): BrowseFilters => {
       minPrice: "",
       maxPrice: "",
       categoryId: "all",
+      ...emptyCategoryFilters(),
     };
   }
 
@@ -80,6 +96,11 @@ const getInitialFilters = (): BrowseFilters => {
     categoryId: getCategoryIdFromParam(
       params.get("category") ?? params.get("categoryId")
     ),
+    propertyType: params.get("propertyType") ?? "",
+    minRooms: params.get("minRooms") ?? "",
+    maxRooms: params.get("maxRooms") ?? "",
+    minSize: params.get("minSize") ?? "",
+    maxSize: params.get("maxSize") ?? "",
   };
 };
 
@@ -90,6 +111,7 @@ const emptyFilters = (): BrowseFilters => ({
   minPrice: "",
   maxPrice: "",
   categoryId: "all",
+  ...emptyCategoryFilters(),
 });
 
 export default function Browse() {
@@ -125,6 +147,11 @@ export default function Browse() {
   const listingRefs = useRef<Record<number, HTMLDivElement>>({});
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState<BrowseFilters>(getInitialFilters);
+  const inferredCategoryId =
+    filters.categoryId === "all"
+      ? inferListingCategoryId(filters.search)
+      : undefined;
+  const effectiveCategoryId = inferredCategoryId ?? filters.categoryId;
 
   useEffect(() => {
     setFilters(getInitialFilters());
@@ -133,6 +160,33 @@ export default function Browse() {
   const clearFilters = () => {
     setFilters(emptyFilters());
     setLocation("/browse", { replace: true });
+  };
+
+  const changeCategory = (value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      categoryId: getCategoryIdFromParam(value),
+      ...emptyCategoryFilters(),
+    }));
+  };
+
+  const changeSearch = (search: string) => {
+    setFilters(prev => {
+      const previousCategory =
+        prev.categoryId === "all"
+          ? inferListingCategoryId(prev.search)
+          : prev.categoryId;
+      const nextCategory =
+        prev.categoryId === "all"
+          ? inferListingCategoryId(search)
+          : prev.categoryId;
+
+      return {
+        ...prev,
+        search,
+        ...(previousCategory !== nextCategory ? emptyCategoryFilters() : {}),
+      };
+    });
   };
 
   // Debounced bounds handler
@@ -190,6 +244,11 @@ export default function Browse() {
     minPrice: filters.minPrice ? parseFloat(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
     categoryId: filters.categoryId === "all" ? undefined : filters.categoryId,
+    propertyType: filters.propertyType || undefined,
+    minRooms: filters.minRooms ? parseInt(filters.minRooms) : undefined,
+    maxRooms: filters.maxRooms ? parseInt(filters.maxRooms) : undefined,
+    minSize: filters.minSize ? parseFloat(filters.minSize) : undefined,
+    maxSize: filters.maxSize ? parseFloat(filters.maxSize) : undefined,
     bounds:
       (viewMode === "map" || viewMode === "split") && autoUpdate && mapBounds
         ? mapBounds
@@ -230,6 +289,11 @@ export default function Browse() {
         maxPrice: filters.maxPrice ? parseFloat(filters.maxPrice) : undefined,
         categoryId:
           filters.categoryId === "all" ? undefined : filters.categoryId,
+        propertyType: filters.propertyType || undefined,
+        minRooms: filters.minRooms ? parseInt(filters.minRooms) : undefined,
+        maxRooms: filters.maxRooms ? parseInt(filters.maxRooms) : undefined,
+        minSize: filters.minSize ? parseFloat(filters.minSize) : undefined,
+        maxSize: filters.maxSize ? parseFloat(filters.maxSize) : undefined,
       },
       emailNotifications: true,
     });
@@ -339,14 +403,19 @@ export default function Browse() {
       ? districtsByCity[filters.city] || []
       : [];
   const selectedCategory =
-    filters.categoryId === "all" ? null : getCategoryById(filters.categoryId);
+    effectiveCategoryId === "all" ? null : getCategoryById(effectiveCategoryId);
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.city !== "all" ||
     filters.district !== "all" ||
     Boolean(filters.minPrice) ||
     Boolean(filters.maxPrice) ||
-    filters.categoryId !== "all";
+    effectiveCategoryId !== "all" ||
+    Boolean(filters.propertyType) ||
+    Boolean(filters.minRooms) ||
+    Boolean(filters.maxRooms) ||
+    Boolean(filters.minSize) ||
+    Boolean(filters.maxSize);
   const pageTitle = selectedCategory
     ? `${selectedCategory.name} İlanları`
     : "Tüm İlanlar";
@@ -429,9 +498,7 @@ export default function Browse() {
                       placeholder="Anahtar kelime..."
                       className="pl-10"
                       value={filters.search}
-                      onChange={e =>
-                        setFilters({ ...filters, search: e.target.value })
-                      }
+                      onChange={e => changeSearch(e.target.value)}
                     />
                   </div>
                 </div>
@@ -441,12 +508,7 @@ export default function Browse() {
                   <Label htmlFor="category">Kategori</Label>
                   <Select
                     value={filters.categoryId.toString()}
-                    onValueChange={value =>
-                      setFilters({
-                        ...filters,
-                        categoryId: getCategoryIdFromParam(value),
-                      })
-                    }
+                    onValueChange={changeCategory}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Tüm kategoriler" />
@@ -464,6 +526,18 @@ export default function Browse() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <BrowseCategoryFilters
+                  categoryId={effectiveCategoryId}
+                  propertyType={filters.propertyType}
+                  minRooms={filters.minRooms}
+                  maxRooms={filters.maxRooms}
+                  minSize={filters.minSize}
+                  maxSize={filters.maxSize}
+                  onChange={values =>
+                    setFilters(previous => ({ ...previous, ...values }))
+                  }
+                />
 
                 {/* City */}
                 <div className="space-y-2">
@@ -622,9 +696,7 @@ export default function Browse() {
                       placeholder="Anahtar kelime..."
                       className="pl-10"
                       value={filters.search}
-                      onChange={e =>
-                        setFilters({ ...filters, search: e.target.value })
-                      }
+                      onChange={e => changeSearch(e.target.value)}
                     />
                   </div>
                 </div>
@@ -633,12 +705,7 @@ export default function Browse() {
                   <Label htmlFor="category-mobile">Kategori</Label>
                   <Select
                     value={filters.categoryId.toString()}
-                    onValueChange={value =>
-                      setFilters({
-                        ...filters,
-                        categoryId: getCategoryIdFromParam(value),
-                      })
-                    }
+                    onValueChange={changeCategory}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Tüm kategoriler" />
@@ -656,6 +723,19 @@ export default function Browse() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <BrowseCategoryFilters
+                  categoryId={effectiveCategoryId}
+                  idSuffix="mobile"
+                  propertyType={filters.propertyType}
+                  minRooms={filters.minRooms}
+                  maxRooms={filters.maxRooms}
+                  minSize={filters.minSize}
+                  maxSize={filters.maxSize}
+                  onChange={values =>
+                    setFilters(previous => ({ ...previous, ...values }))
+                  }
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="city-mobile">Şehir</Label>

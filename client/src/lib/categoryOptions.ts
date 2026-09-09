@@ -59,6 +59,20 @@ export const LISTING_CATEGORIES: ListingCategory[] = [
   },
 ];
 
+export const CATEGORY_DETAIL_OPTIONS: Record<number, string[]> = {
+  1: ["Daire", "Villa", "Müstakil Ev", "Arsa", "İşyeri"],
+  2: ["Otomobil", "Motosiklet", "Ticari Araç"],
+  3: ["Telefon", "Bilgisayar", "Tablet", "Oyun Konsolu"],
+  4: ["Mobilya", "Beyaz Eşya", "Dekorasyon"],
+  5: ["Hobi", "İş Ekipmanı", "Diğer"],
+};
+
+export const getCategoryDetailLabel = (categoryId: number) => {
+  if (categoryId === 1) return "Emlak Tipi";
+  if (categoryId === 2) return "Araç Tipi";
+  return "Ürün Tipi";
+};
+
 export const getCategoryById = (id: number) =>
   LISTING_CATEGORIES.find(category => category.id === id);
 

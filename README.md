@@ -51,8 +51,9 @@ not intended for a real public launch.
 
 ## Sites beta deployment
 
-The public beta uses OpenAI Sites with platform-provided ChatGPT sign-in, a D1
-database, and R2 image storage. Its logical bindings are declared in
+The public beta uses OpenAI Sites with temporary one-click tester sessions, a
+D1 database, and R2 image storage. Google authentication will replace the
+tester sessions before public launch. Its logical bindings are declared in
 `.openai/hosting.json`; hosted resources and migrations are applied during the
 Sites deployment.
 
@@ -62,9 +63,15 @@ Build the Sites release with:
 pnpm run build:sites
 ```
 
+Package the release with the Sites-specific SQLite migrations:
+
+```bash
+pnpm run package:sites -- /tmp/alsatbedava-sites.tar.gz
+```
+
 The Sites build does not use the browser-only static demo store. Anonymous
 visitors can browse, while creating listings, messaging, favorites, saved
-searches, and reports require sign-in.
+searches, and reports require a beta session.
 
 Run database migrations:
 

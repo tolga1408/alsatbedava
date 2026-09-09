@@ -6,6 +6,9 @@ export const APP_LOGO =
   import.meta.env.VITE_APP_LOGO ||
   "https://placehold.co/128x128/E1E7EF/1F2937?text=AB";
 
+export const LOGIN_LABEL =
+  import.meta.env.VITE_SITES_BETA === "true" ? "Test Girişi" : "Giriş Yap";
+
 const getDemoLoginUrl = () => {
   const redirect =
     typeof window === "undefined"
@@ -27,7 +30,7 @@ const getCurrentReturnPath = () =>
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
   if (import.meta.env.VITE_SITES_BETA === "true") {
-    return `/signin-with-chatgpt?return_to=${encodeURIComponent(getCurrentReturnPath())}`;
+    return `/api/beta-login?return_to=${encodeURIComponent(getCurrentReturnPath())}`;
   }
 
   const authorizeUrl = import.meta.env.VITE_OAUTH_AUTHORIZE_URL;
@@ -59,5 +62,5 @@ export const getLoginUrl = () => {
 
 export const getLogoutUrl = () =>
   import.meta.env.VITE_SITES_BETA === "true"
-    ? "/signout-with-chatgpt?return_to=%2F"
+    ? "/api/beta-logout?return_to=%2F"
     : "/";

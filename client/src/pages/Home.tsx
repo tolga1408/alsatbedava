@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { APP_LOGO, APP_TITLE, getLoginUrl, LOGIN_LABEL } from "@/const";
 import { Link, useLocation } from "wouter";
 import {
   Home as HomeIcon,
@@ -127,7 +127,7 @@ export default function Home() {
             ) : (
               <>
                 <a href={getLoginUrl()}>
-                  <Button variant="outline">Giriş Yap</Button>
+                  <Button variant="outline">{LOGIN_LABEL}</Button>
                 </a>
                 <a href={getLoginUrl()}>
                   <Button>İlan Ver</Button>
@@ -290,9 +290,7 @@ export default function Home() {
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Eye className="w-4 h-4" />
-                                <span>
-                                  {Math.floor(Math.random() * 500) + 50}
-                                </span>
+                                <span>{listing.viewCount}</span>
                               </div>
                               <Button
                                 variant="ghost"
@@ -365,7 +363,7 @@ export default function Home() {
                       variant="secondary"
                       className="text-lg px-8"
                     >
-                      Ücretsiz Kayıt Ol
+                      Test Hesabıyla İlan Ver
                     </Button>
                   </a>
                   <Link href="/browse">

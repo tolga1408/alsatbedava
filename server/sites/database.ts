@@ -1,4 +1,5 @@
 import type { D1Database, D1PreparedStatement } from "./platform";
+import { parseListingSearch } from "../../shared/listingSearch";
 
 export type BetaUser = {
   id: number;
@@ -160,6 +161,11 @@ export async function searchListings(
     district?: string;
     minPrice?: number;
     maxPrice?: number;
+    propertyType?: string;
+    minRooms?: number;
+    maxRooms?: number;
+    minSize?: number;
+    maxSize?: number;
     status?: string;
     limit?: number;
     offset?: number;
@@ -168,17 +174,21 @@ export async function searchListings(
 ) {
   const conditions: string[] = ["status = ?"];
   const values: unknown[] = [params.status ?? "active"];
+  const searchIntent = params.categoryId
+    ? { textSearch: params.search?.trim() || undefined }
+    : parseListingSearch(params.search);
+  const effectiveCategoryId = params.categoryId ?? searchIntent.categoryId;
 
-  if (params.search?.trim()) {
-    const search = `%${params.search.trim()}%`;
+  if (searchIntent.textSearch) {
+    const search = `%${searchIntent.textSearch}%`;
     conditions.push(
       "(title LIKE ? OR description LIKE ? OR city LIKE ? OR district LIKE ? OR property_type LIKE ?)"
     );
     values.push(search, search, search, search, search);
   }
-  if (params.categoryId !== undefined) {
+  if (effectiveCategoryId !== undefined) {
     conditions.push("category_id = ?");
-    values.push(params.categoryId);
+    values.push(effectiveCategoryId);
   }
   if (params.city) {
     conditions.push("city = ?");
@@ -195,6 +205,26 @@ export async function searchListings(
   if (params.maxPrice !== undefined) {
     conditions.push("price <= ?");
     values.push(params.maxPrice);
+  }
+  if (params.propertyType) {
+    conditions.push("property_type = ?");
+    values.push(params.propertyType);
+  }
+  if (params.minRooms !== undefined) {
+    conditions.push("rooms >= ?");
+    values.push(params.minRooms);
+  }
+  if (params.maxRooms !== undefined) {
+    conditions.push("rooms <= ?");
+    values.push(params.maxRooms);
+  }
+  if (params.minSize !== undefined) {
+    conditions.push("size >= ?");
+    values.push(params.minSize);
+  }
+  if (params.maxSize !== undefined) {
+    conditions.push("size <= ?");
+    values.push(params.maxSize);
   }
   if (params.bounds) {
     conditions.push(

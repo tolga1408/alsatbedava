@@ -2,7 +2,11 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
-import { getOrCreateSitesUser } from "./sites/auth";
+import {
+  clearBetaSessionCookie,
+  createBetaSessionCookie,
+  getOrCreateSitesUser,
+} from "./sites/auth";
 import {
   addFavorite,
   createListing,
@@ -76,6 +80,11 @@ const searchSchema = z.object({
   district: optionalShortText,
   minPrice: z.number().nonnegative().optional(),
   maxPrice: z.number().positive().optional(),
+  propertyType: optionalShortText,
+  minRooms: z.number().int().min(0).max(100).optional(),
+  maxRooms: z.number().int().min(0).max(100).optional(),
+  minSize: z.number().nonnegative().max(10_000_000).optional(),
+  maxSize: z.number().positive().max(10_000_000).optional(),
   status: listingStatusSchema.optional(),
   limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().nonnegative().optional(),
@@ -263,6 +272,11 @@ const appRouter = t.router({
             city: citySchema.optional(),
             minPrice: z.number().nonnegative().optional(),
             maxPrice: z.number().positive().optional(),
+            propertyType: optionalShortText,
+            minRooms: z.number().int().min(0).max(100).optional(),
+            maxRooms: z.number().int().min(0).max(100).optional(),
+            minSize: z.number().nonnegative().max(10_000_000).optional(),
+            maxSize: z.number().positive().max(10_000_000).optional(),
           }),
           emailNotifications: z.boolean().optional(),
         })
@@ -358,6 +372,31 @@ function handleSitemap(request: Request) {
   );
 }
 
+function safeReturnPath(request: Request) {
+  const returnTo = new URL(request.url).searchParams.get("return_to") ?? "/";
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) return "/";
+
+  try {
+    const requestUrl = new URL(request.url);
+    const targetUrl = new URL(returnTo, requestUrl.origin);
+    if (targetUrl.origin !== requestUrl.origin) return "/";
+    return `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
+  } catch {
+    return "/";
+  }
+}
+
+function betaSessionRedirect(request: Request, cookie: string) {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: safeReturnPath(request),
+      "set-cookie": cookie,
+      "cache-control": "no-store",
+    },
+  });
+}
+
 async function serveUpload(request: Request, env: SitesEnv) {
   const pathname = new URL(request.url).pathname;
   const key = decodeURIComponent(pathname.slice("/api/uploads/".length));
@@ -394,6 +433,12 @@ const worker = {
     const url = new URL(request.url);
 
     if (url.pathname === "/sitemap.xml") return handleSitemap(request);
+    if (url.pathname === "/api/beta-login") {
+      return betaSessionRedirect(request, createBetaSessionCookie());
+    }
+    if (url.pathname === "/api/beta-logout") {
+      return betaSessionRedirect(request, clearBetaSessionCookie());
+    }
     if (url.pathname.startsWith("/api/uploads/")) {
       return serveUpload(request, env);
     }

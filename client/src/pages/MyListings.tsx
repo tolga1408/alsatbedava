@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, LOGIN_LABEL } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Home, MapPin, Plus } from "lucide-react";
 import { Link } from "wouter";
@@ -41,12 +41,14 @@ export default function MyListings() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md w-full">
           <CardContent className="py-12 px-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Giriş Yapın</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              Test hesabıyla devam edin
+            </h2>
             <p className="text-gray-600 mb-6">
-              İlanlarınızı görmek için giriş yapmanız gerekmektedir.
+              Beta ilanlarınızı görmek için test oturumu açın.
             </p>
             <a href={getLoginUrl()}>
-              <Button className="w-full">Giriş Yap</Button>
+              <Button className="w-full">{LOGIN_LABEL}</Button>
             </a>
           </CardContent>
         </Card>

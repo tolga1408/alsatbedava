@@ -12,7 +12,7 @@
 
 - [x] Public tester URL
 - [x] Transparent sample listings across five categories
-- [x] ChatGPT sign-in for beta testers
+- [x] One-click temporary beta sessions for testers
 - [x] Persistent users, listings, favorites, messages, saved searches, and reports
 - [x] Persistent JPG, PNG, and WebP listing photos
 - [x] Remove generated phone numbers and unverified trust claims
@@ -24,6 +24,7 @@
 - [ ] Add privacy policy, terms, and marketplace rules
 - [ ] Configure analytics and error monitoring
 - [ ] Connect and verify `alsatbedava.com`
+- [ ] Replace temporary beta sessions with Google authentication
 - [ ] Complete a 5-10 person beta feedback round
 
 Beta targets: API p50/p95/p99 below 200/500/1000 ms; mobile LCP below 2.5 s,
@@ -64,7 +65,7 @@ INP below 200 ms, CLS below 0.1; 99.5% uptime.
 ### Advanced Features
 
 - [ ] Demo/seed listings with real photos for showcase
-- [x] Advanced filters (15 cities, price ranges with quick filters)
+- [x] Category-aware search and filters for emlak and vasita
 - [ ] Map integration
 - [ ] Save search functionality
 - [ ] Comparison tool

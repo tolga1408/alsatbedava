@@ -17,22 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, LOGIN_LABEL } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
-import { LISTING_CATEGORIES } from "@/lib/categoryOptions";
-
-const detailOptionsByCategory: Record<number, string[]> = {
-  1: ["Daire", "Villa", "Arsa", "İşyeri"],
-  2: ["Otomobil", "Motosiklet", "Ticari Araç"],
-  3: ["Telefon", "Bilgisayar", "Tablet", "Oyun Konsolu"],
-  4: ["Mobilya", "Beyaz Eşya", "Dekorasyon"],
-  5: ["Hobi", "İş Ekipmanı", "Diğer"],
-};
+import {
+  CATEGORY_DETAIL_OPTIONS,
+  getCategoryDetailLabel,
+  LISTING_CATEGORIES,
+} from "@/lib/categoryOptions";
 
 export default function CreateListing() {
   const { isAuthenticated } = useAuth();
@@ -53,7 +49,7 @@ export default function CreateListing() {
   });
   const isPropertyListing = formData.categoryId === 1;
   const detailOptions =
-    detailOptionsByCategory[formData.categoryId] ?? detailOptionsByCategory[5];
+    CATEGORY_DETAIL_OPTIONS[formData.categoryId] ?? CATEGORY_DETAIL_OPTIONS[5];
 
   const createMutation = trpc.listings.create.useMutation({
     onSuccess: data => {
@@ -95,14 +91,14 @@ export default function CreateListing() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle>Giriş Yapın</CardTitle>
+            <CardTitle>Test hesabıyla devam edin</CardTitle>
             <CardDescription>
-              İlan vermek için giriş yapmanız gerekmektedir.
+              Beta sırasında ilan vermek için tek tıkla test oturumu açın.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <a href={getLoginUrl()}>
-              <Button className="w-full">Giriş Yap</Button>
+              <Button className="w-full">{LOGIN_LABEL} ile Devam Et</Button>
             </a>
           </CardContent>
         </Card>
@@ -296,7 +292,7 @@ export default function CreateListing() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="propertyType">
-                    {isPropertyListing ? "Emlak Tipi" : "İlan Tipi"}
+                    {getCategoryDetailLabel(formData.categoryId)}
                   </Label>
                   <Select
                     value={formData.propertyType}

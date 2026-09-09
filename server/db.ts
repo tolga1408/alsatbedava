@@ -1,4 +1,4 @@
-import { eq, and, or, desc, sql, like } from "drizzle-orm";
+import { eq, and, or, desc, sql, like, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -13,6 +13,7 @@ import {
   InsertSavedSearch,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import { parseListingSearch } from "../shared/listingSearch";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -340,6 +341,11 @@ export async function searchListings(params: {
   categoryId?: number;
   minPrice?: number;
   maxPrice?: number;
+  propertyType?: string;
+  minRooms?: number;
+  maxRooms?: number;
+  minSize?: number;
+  maxSize?: number;
   city?: string;
   district?: string;
   status?: string;
@@ -347,11 +353,16 @@ export async function searchListings(params: {
   offset?: number;
   bounds?: { north: number; south: number; east: number; west: number };
 }) {
+  const searchIntent = params.categoryId
+    ? { textSearch: params.search?.trim() || undefined }
+    : parseListingSearch(params.search);
+  const effectiveCategoryId = params.categoryId ?? searchIntent.categoryId;
+
   if (useDemoStore()) {
     let results = [...demoListings];
 
-    if (params.search?.trim()) {
-      const query = params.search.trim().toLocaleLowerCase("tr-TR");
+    if (searchIntent.textSearch) {
+      const query = searchIntent.textSearch.toLocaleLowerCase("tr-TR");
       results = results.filter(listing =>
         [
           listing.title,
@@ -367,9 +378,9 @@ export async function searchListings(params: {
           .includes(query)
       );
     }
-    if (params.categoryId) {
+    if (effectiveCategoryId) {
       results = results.filter(
-        listing => listing.categoryId === params.categoryId
+        listing => listing.categoryId === effectiveCategoryId
       );
     }
     if (params.status) {
@@ -386,6 +397,23 @@ export async function searchListings(params: {
     }
     if (params.maxPrice !== undefined) {
       results = results.filter(listing => listing.price <= params.maxPrice!);
+    }
+    if (params.propertyType) {
+      results = results.filter(
+        listing => listing.propertyType === params.propertyType
+      );
+    }
+    if (params.minRooms !== undefined) {
+      results = results.filter(listing => listing.rooms >= params.minRooms!);
+    }
+    if (params.maxRooms !== undefined) {
+      results = results.filter(listing => listing.rooms <= params.maxRooms!);
+    }
+    if (params.minSize !== undefined) {
+      results = results.filter(listing => listing.size >= params.minSize!);
+    }
+    if (params.maxSize !== undefined) {
+      results = results.filter(listing => listing.size <= params.maxSize!);
     }
     if (params.bounds) {
       results = results.filter(listing => {
@@ -409,11 +437,11 @@ export async function searchListings(params: {
 
   const conditions = [];
 
-  if (params.categoryId) {
-    conditions.push(eq(listings.categoryId, params.categoryId));
+  if (effectiveCategoryId) {
+    conditions.push(eq(listings.categoryId, effectiveCategoryId));
   }
-  if (params.search?.trim()) {
-    const query = `%${params.search.trim()}%`;
+  if (searchIntent.textSearch) {
+    const query = `%${searchIntent.textSearch}%`;
     conditions.push(
       or(
         like(listings.title, query),
@@ -431,6 +459,21 @@ export async function searchListings(params: {
   }
   if (params.district) {
     conditions.push(eq(listings.district, params.district));
+  }
+  if (params.propertyType) {
+    conditions.push(eq(listings.propertyType, params.propertyType));
+  }
+  if (params.minRooms !== undefined) {
+    conditions.push(gte(listings.rooms, params.minRooms));
+  }
+  if (params.maxRooms !== undefined) {
+    conditions.push(lte(listings.rooms, params.maxRooms));
+  }
+  if (params.minSize !== undefined) {
+    conditions.push(gte(listings.size, params.minSize));
+  }
+  if (params.maxSize !== undefined) {
+    conditions.push(lte(listings.size, params.maxSize));
   }
 
   // Filter by bounds if provided (using city coordinates)

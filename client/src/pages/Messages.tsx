@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, LOGIN_LABEL } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
@@ -17,18 +17,19 @@ export default function Messages() {
   } | null>(null);
   const [messageText, setMessageText] = useState("");
 
-  const { data: conversations, isLoading: conversationsLoading } = trpc.messages.conversations.useQuery(
-    undefined,
-    { enabled: isAuthenticated }
-  );
+  const { data: conversations, isLoading: conversationsLoading } =
+    trpc.messages.conversations.useQuery(undefined, {
+      enabled: isAuthenticated,
+    });
 
-  const { data: messages, isLoading: messagesLoading } = trpc.messages.getConversation.useQuery(
-    {
-      partnerId: selectedConversation?.partnerId || 0,
-      listingId: selectedConversation?.listingId || 0,
-    },
-    { enabled: !!selectedConversation }
-  );
+  const { data: messages, isLoading: messagesLoading } =
+    trpc.messages.getConversation.useQuery(
+      {
+        partnerId: selectedConversation?.partnerId || 0,
+        listingId: selectedConversation?.listingId || 0,
+      },
+      { enabled: !!selectedConversation }
+    );
 
   const utils = trpc.useUtils();
   const sendMutation = trpc.messages.send.useMutation({
@@ -65,12 +66,14 @@ export default function Messages() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md w-full">
           <CardContent className="py-12 px-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Giriş Yapın</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              Test hesabıyla devam edin
+            </h2>
             <p className="text-gray-600 mb-6">
-              Mesajlarınızı görmek için giriş yapmanız gerekmektedir.
+              Beta mesajlarını görmek için test oturumu açın.
             </p>
             <a href={getLoginUrl()}>
-              <Button className="w-full">Giriş Yap</Button>
+              <Button className="w-full">{LOGIN_LABEL}</Button>
             </a>
           </CardContent>
         </Card>
@@ -102,7 +105,9 @@ export default function Messages() {
             <Card>
               <CardContent className="p-0">
                 {conversationsLoading ? (
-                  <div className="p-8 text-center text-gray-600">Yükleniyor...</div>
+                  <div className="p-8 text-center text-gray-600">
+                    Yükleniyor...
+                  </div>
                 ) : conversations && conversations.length > 0 ? (
                   <div className="divide-y">
                     {conversations.map((conv: any) => (
@@ -122,16 +127,22 @@ export default function Messages() {
                         }`}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <p className="font-semibold">Kullanıcı #{conv.partnerId}</p>
+                          <p className="font-semibold">
+                            Kullanıcı #{conv.partnerId}
+                          </p>
                           {conv.unreadCount > 0 && (
                             <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                               {conv.unreadCount}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 line-clamp-1">{conv.lastMessage}</p>
+                        <p className="text-sm text-gray-600 line-clamp-1">
+                          {conv.lastMessage}
+                        </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(conv.lastMessageAt).toLocaleDateString('tr-TR')}
+                          {new Date(conv.lastMessageAt).toLocaleDateString(
+                            "tr-TR"
+                          )}
                         </p>
                       </button>
                     ))}
@@ -153,14 +164,20 @@ export default function Messages() {
                 <>
                   {/* Chat Header */}
                   <div className="border-b p-4">
-                    <h3 className="font-semibold">Kullanıcı #{selectedConversation.partnerId}</h3>
-                    <p className="text-sm text-gray-600">İlan #{selectedConversation.listingId}</p>
+                    <h3 className="font-semibold">
+                      Kullanıcı #{selectedConversation.partnerId}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      İlan #{selectedConversation.listingId}
+                    </p>
                   </div>
 
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messagesLoading ? (
-                      <div className="text-center text-gray-600">Yükleniyor...</div>
+                      <div className="text-center text-gray-600">
+                        Yükleniyor...
+                      </div>
                     ) : messages && messages.length > 0 ? (
                       messages.map((msg: any) => (
                         <div
@@ -177,19 +194,26 @@ export default function Messages() {
                             <p>{msg.content}</p>
                             <p
                               className={`text-xs mt-1 ${
-                                msg.senderId === user?.id ? "text-blue-100" : "text-gray-500"
+                                msg.senderId === user?.id
+                                  ? "text-blue-100"
+                                  : "text-gray-500"
                               }`}
                             >
-                              {new Date(msg.createdAt).toLocaleTimeString('tr-TR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {new Date(msg.createdAt).toLocaleTimeString(
+                                "tr-TR",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
                             </p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-gray-600">Henüz mesaj yok</div>
+                      <div className="text-center text-gray-600">
+                        Henüz mesaj yok
+                      </div>
                     )}
                   </div>
 
@@ -199,8 +223,8 @@ export default function Messages() {
                       <Input
                         placeholder="Mesajınızı yazın..."
                         value={messageText}
-                        onChange={(e) => setMessageText(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                        onChange={e => setMessageText(e.target.value)}
+                        onKeyPress={e => e.key === "Enter" && handleSend()}
                         disabled={sendMutation.isPending}
                       />
                       <Button

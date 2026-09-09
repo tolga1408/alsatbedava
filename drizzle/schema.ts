@@ -1,4 +1,11 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -49,25 +56,32 @@ export const listings = mysqlTable("listings", {
   description: text("description").notNull(),
   price: int("price").notNull(), // in TL (cents), e.g., 50000 = 500.00 TL
   currency: varchar("currency", { length: 3 }).default("TRY").notNull(),
-  
+
   // Location
   city: varchar("city", { length: 100 }).notNull(),
   district: varchar("district", { length: 100 }),
   neighborhood: varchar("neighborhood", { length: 100 }),
   latitude: varchar("latitude", { length: 20 }), // Decimal degrees, e.g., "41.0082"
   longitude: varchar("longitude", { length: 20 }), // Decimal degrees, e.g., "28.9784"
-  
+
   // Images (JSON array of S3 URLs)
   images: text("images"), // JSON: ["url1", "url2", ...]
-  
+
+  // Category-specific details
+  propertyType: varchar("propertyType", { length: 100 }),
+  rooms: int("rooms"),
+  size: int("size"),
+
   // Status
-  status: mysqlEnum("status", ["active", "sold", "deleted"]).default("active").notNull(),
+  status: mysqlEnum("status", ["active", "sold", "deleted"])
+    .default("active")
+    .notNull(),
   isFeatured: int("isFeatured").default(0).notNull(), // 1 = true, 0 = false
-  
+
   // Metrics
   viewCount: int("viewCount").default(0).notNull(),
   favoriteCount: int("favoriteCount").default(0).notNull(),
-  
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -107,7 +121,9 @@ export const reports = mysqlTable("reports", {
   reporterId: int("reporterId").notNull(),
   reason: varchar("reason", { length: 50 }).notNull(), // "spam", "fraud", "inappropriate", etc.
   description: text("description"),
-  status: mysqlEnum("status", ["pending", "reviewed", "resolved"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "reviewed", "resolved"])
+    .default("pending")
+    .notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

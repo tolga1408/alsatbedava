@@ -22,6 +22,13 @@
       "when": 1762865394408,
       "tag": "0002_tough_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1788841275797,
+      "tag": "0003_burly_mach_iv",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { UNAUTHED_ERR_MSG } from "@shared/const";
 import type { AppRouter } from "../../../server/routers";
 import superjson from "superjson";
 import { z } from "zod";
+import { parseListingSearch } from "@shared/listingSearch";
 
 const SESSION_KEY = "alsatbedava.demo.session";
 const STORE_KEY = "alsatbedava.demo.store.v2";
@@ -73,6 +74,11 @@ type DemoSavedSearch = {
     city?: string;
     minPrice?: number;
     maxPrice?: number;
+    propertyType?: string;
+    minRooms?: number;
+    maxRooms?: number;
+    minSize?: number;
+    maxSize?: number;
   };
   isActive: number;
   emailNotifications: number;
@@ -810,6 +816,11 @@ const demoRouter = t.router({
           district: z.string().optional(),
           minPrice: z.number().optional(),
           maxPrice: z.number().optional(),
+          propertyType: z.string().optional(),
+          minRooms: z.number().optional(),
+          maxRooms: z.number().optional(),
+          minSize: z.number().optional(),
+          maxSize: z.number().optional(),
           status: z.string().optional(),
           limit: z.number().optional(),
           offset: z.number().optional(),
@@ -826,15 +837,19 @@ const demoRouter = t.router({
       .query(({ input }) => {
         const store = readStore();
         let results = [...store.listings];
+        const searchIntent = input.categoryId
+          ? { textSearch: input.search?.trim() || undefined }
+          : parseListingSearch(input.search);
+        const effectiveCategoryId = input.categoryId ?? searchIntent.categoryId;
 
-        if (input.search) {
+        if (searchIntent.textSearch) {
           results = results.filter(listing =>
-            listingMatchesSearch(listing, input.search)
+            listingMatchesSearch(listing, searchIntent.textSearch)
           );
         }
-        if (input.categoryId) {
+        if (effectiveCategoryId) {
           results = results.filter(
-            listing => listing.categoryId === input.categoryId
+            listing => listing.categoryId === effectiveCategoryId
           );
         }
         if (input.status) {
@@ -855,6 +870,31 @@ const demoRouter = t.router({
         }
         if (input.maxPrice !== undefined) {
           results = results.filter(listing => listing.price <= input.maxPrice!);
+        }
+        if (input.propertyType) {
+          results = results.filter(
+            listing => listing.propertyType === input.propertyType
+          );
+        }
+        if (input.minRooms !== undefined) {
+          results = results.filter(
+            listing => (listing.rooms ?? -1) >= input.minRooms!
+          );
+        }
+        if (input.maxRooms !== undefined) {
+          results = results.filter(
+            listing => (listing.rooms ?? Infinity) <= input.maxRooms!
+          );
+        }
+        if (input.minSize !== undefined) {
+          results = results.filter(
+            listing => (listing.size ?? -1) >= input.minSize!
+          );
+        }
+        if (input.maxSize !== undefined) {
+          results = results.filter(
+            listing => (listing.size ?? Infinity) <= input.maxSize!
+          );
         }
         if (input.bounds) {
           results = results.filter(listing => {
@@ -1139,6 +1179,11 @@ const demoRouter = t.router({
             city: z.string().optional(),
             minPrice: z.number().optional(),
             maxPrice: z.number().optional(),
+            propertyType: z.string().optional(),
+            minRooms: z.number().optional(),
+            maxRooms: z.number().optional(),
+            minSize: z.number().optional(),
+            maxSize: z.number().optional(),
           }),
           emailNotifications: z.boolean().optional(),
         })
